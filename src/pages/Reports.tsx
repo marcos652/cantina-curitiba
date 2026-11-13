@@ -11,7 +11,7 @@ import { DateRange } from '@/components/ui/DateRange'
 import { Chips } from '@/components/ui/Tabs'
 import { PageHeader, SectionTitle } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Stat, StatGrid } from '@/components/ui/Stat'
+import { Kpi, KpiStrip } from '@/components/ui/Stat'
 import { Badge } from '@/components/ui/Badge'
 
 type Preset = 'hoje' | '7' | '30' | 'mes' | 'custom'
@@ -127,13 +127,13 @@ export function Reports() {
         />
       </div>
 
-      <StatGrid cols={5}>
-        <Stat label="Receita bruta" value={money(revenue)} hint={`${num(list.length)} ${list.length === 1 ? 'venda' : 'vendas'}`} />
-        <Stat label="Custo dos produtos" value={money(cost)} />
-        <Stat label="Taxas de cartão" value={money(fees)} />
-        <Stat label="Lucro estimado" value={money(profit)} hint="Receita − custo − taxas" />
-        <Stat label="Perdas por vencimento" value={money(losses.descarte.value)} hint={`${num(losses.descarte.quantity)} un. descartadas`} />
-      </StatGrid>
+      <KpiStrip cols={5}>
+        <Kpi label="Receita bruta" value={money(revenue)} hint={`${num(list.length)} ${list.length === 1 ? 'venda' : 'vendas'}`} />
+        <Kpi label="Custo dos produtos" value={money(cost)} />
+        <Kpi label="Taxas de cartão" value={money(fees)} />
+        <Kpi label="Lucro estimado" value={money(profit)} hint="Receita − custo − taxas" />
+        <Kpi label="Perdas por vencimento" value={money(losses.descarte.value)} hint={`${num(losses.descarte.quantity)} un. descartadas`} />
+      </KpiStrip>
 
       <div className="mb-4 mt-8">
         <Chips
@@ -149,7 +149,7 @@ export function Reports() {
       </div>
 
       {tab === 'dia' && (
-        <div className="table-wrap">
+        <div className="card table-wrap">
           {byDay.length === 0 ? (
             <EmptyState icon={BarChart3} title="Nenhuma venda no período" description="Escolha outro período para ver os totais por dia." />
           ) : (
@@ -185,7 +185,7 @@ export function Reports() {
             <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
               <section>
                 <SectionTitle title="Mais vendidos" />
-                <ol className="panel divide-y divide-line">
+                <ol className="card divide-y divide-rule">
                   {top.map((p, i) => (
                     <li key={p.productId} className="flex items-center gap-3 px-4 py-2.5 text-sm">
                       <span className="w-4 text-xs text-faint tabular">{i + 1}</span>
@@ -197,7 +197,7 @@ export function Reports() {
               </section>
               <section>
                 <SectionTitle title="Menos vendidos" />
-                <ol className="panel divide-y divide-line">
+                <ol className="card divide-y divide-rule">
                   {bottom.map((p) => (
                     <li key={p.productId} className="flex items-center gap-3 px-4 py-2.5 text-sm">
                       <span className="min-w-0 flex-1 truncate">{p.name}</span>
@@ -217,7 +217,7 @@ export function Reports() {
               </section>
             </div>
           )}
-          <div className="table-wrap">
+          <div className="card table-wrap">
             {byProduct.length === 0 ? (
               <EmptyState icon={BarChart3} title="Nenhuma venda no período" description="Escolha outro período para ver as vendas por produto." />
             ) : (
@@ -255,7 +255,7 @@ export function Reports() {
       )}
 
       {tab === 'pagamento' && (
-        <div className="table-wrap">
+        <div className="card table-wrap">
           {byMethod.length === 0 ? (
             <EmptyState icon={BarChart3} title="Nenhuma venda no período" description="Escolha outro período para ver as formas de pagamento." />
           ) : (
@@ -299,11 +299,11 @@ export function Reports() {
 
       {tab === 'perdas' && (
         <>
-          <StatGrid cols={2}>
-            <Stat label="Descartes por vencimento" value={money(losses.descarte.value)} hint={`${num(losses.descarte.quantity)} un.`} />
-            <Stat label="Outras perdas" value={money(losses.perda.value)} hint={`${num(losses.perda.quantity)} un.`} />
-          </StatGrid>
-          <div className="table-wrap mt-4">
+          <KpiStrip cols={2}>
+            <Kpi label="Descartes por vencimento" value={money(losses.descarte.value)} hint={`${num(losses.descarte.quantity)} un.`} />
+            <Kpi label="Outras perdas" value={money(losses.perda.value)} hint={`${num(losses.perda.quantity)} un.`} />
+          </KpiStrip>
+          <div className="card table-wrap mt-4">
             {lossList.length === 0 ? (
               <EmptyState icon={BarChart3} title="Nenhuma perda no período" description="Descartes e perdas registrados no estoque aparecem aqui." />
             ) : (

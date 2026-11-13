@@ -13,10 +13,10 @@ interface FieldProps {
 export function Field({ label, hint, error, className, children }: FieldProps) {
   return (
     <label className={cx('block', className)}>
-      {label && <span className="mb-1.5 block text-[13px] text-muted">{label}</span>}
+      {label && <span className="mb-1.5 block text-[13px] font-medium text-muted">{label}</span>}
       {children}
       {error ? (
-        <span className="mt-1.5 block text-xs text-danger">{error}</span>
+        <span className="mt-1.5 block text-xs text-danger-text">{error}</span>
       ) : hint ? (
         <span className="mt-1.5 block text-xs text-faint">{hint}</span>
       ) : null}

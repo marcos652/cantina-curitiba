@@ -34,7 +34,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/20 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/30 p-0 sm:items-center sm:p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -51,7 +51,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
       >
         <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-5">
           <div>
-            <h2 className="text-base font-medium">{title}</h2>
+            <h2 className="text-base font-semibold">{title}</h2>
             {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
           </div>
           <Button variant="ghost" size="sm" icon onClick={onClose} aria-label="Fechar" className="-mr-2 -mt-1">

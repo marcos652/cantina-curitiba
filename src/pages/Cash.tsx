@@ -10,7 +10,7 @@ import { Field, Input, MoneyInput } from '@/components/ui/Field'
 import { Modal } from '@/components/ui/Modal'
 import { PageHeader, SectionTitle } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Stat, StatGrid } from '@/components/ui/Stat'
+import { Kpi, KpiStrip } from '@/components/ui/Stat'
 import { Badge } from '@/components/ui/Badge'
 import { OpenCashModal } from '@/components/OpenCashModal'
 
@@ -98,18 +98,18 @@ export function Cash() {
 
       {session ? (
         <>
-          <StatGrid cols={5}>
-            <Stat label="Abertura" value={money(session.openingAmount)} />
-            <Stat label="Vendas em dinheiro" value={money(cashSales)} />
-            <Stat label="Reforços" value={money(reinforcements)} />
-            <Stat label="Sangrias" value={money(withdrawals)} />
-            <Stat label="Esperado na gaveta" value={money(expected)} hint="Abertura + dinheiro + reforços − sangrias" />
-          </StatGrid>
+          <KpiStrip cols={5}>
+            <Kpi label="Abertura" value={money(session.openingAmount)} />
+            <Kpi label="Vendas em dinheiro" value={money(cashSales)} />
+            <Kpi label="Reforços" value={money(reinforcements)} />
+            <Kpi label="Sangrias" value={money(withdrawals)} />
+            <Kpi label="Esperado na gaveta" value={money(expected)} hint="Abertura + dinheiro + reforços − sangrias" />
+          </KpiStrip>
 
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <section className="lg:col-span-2">
               <SectionTitle title="Vendas por forma de pagamento" />
-              <div className="table-wrap">
+              <div className="card table-wrap">
                 <table className="table">
                   <thead>
                     <tr>
@@ -144,7 +144,7 @@ export function Cash() {
 
             <section>
               <SectionTitle title="Sangrias e reforços" />
-              <div className="panel">
+              <div className="card">
                 {session.movements.length === 0 ? (
                   <EmptyState compact title="Nenhuma movimentação" description="Registre retiradas (sangria) ou entradas de troco (reforço)." />
                 ) : (
@@ -166,7 +166,7 @@ export function Cash() {
           </div>
         </>
       ) : (
-        <div className="panel">
+        <div className="card">
           <EmptyState
             icon={Wallet}
             title="Caixa fechado"
@@ -181,7 +181,7 @@ export function Cash() {
 
       <section className="mt-8">
         <SectionTitle title="Caixas anteriores" />
-        <div className="table-wrap">
+        <div className="card table-wrap">
           {history.length === 0 ? (
             <EmptyState compact title="Nenhum caixa fechado ainda" description="Os fechamentos aparecem aqui com a conferência." />
           ) : (

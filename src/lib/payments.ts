@@ -1,6 +1,15 @@
 import type { PaymentMethod } from '@/types'
+import { Banknote, CreditCard, Layers, QrCode, type LucideIcon } from 'lucide-react'
 
 export const PAYMENT_METHODS: PaymentMethod[] = ['debito', 'credito', 'credito_parcelado', 'dinheiro', 'pix']
+
+export const PAYMENT_ICONS: Record<PaymentMethod, LucideIcon> = {
+  debito: CreditCard,
+  credito: CreditCard,
+  credito_parcelado: Layers,
+  dinheiro: Banknote,
+  pix: QrCode,
+}
 
 export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   debito: 'Débito',

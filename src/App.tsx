@@ -14,12 +14,7 @@ import { Reports } from '@/pages/Reports'
 import { SettingsPage } from '@/pages/Settings'
 
 export function App() {
-  const accent = useStore((s) => s.settings.accent)
   const storeName = useStore((s) => s.settings.storeName)
-
-  useEffect(() => {
-    document.documentElement.style.setProperty('--accent', accent)
-  }, [accent])
 
   useEffect(() => {
     document.title = storeName || 'Cantina'

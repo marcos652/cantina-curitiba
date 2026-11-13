@@ -187,7 +187,7 @@ export function Stock() {
       <Tabs items={STOCK_TABS} />
 
       {products.length === 0 ? (
-        <div className="panel">
+        <div className="card">
           <EmptyState
             icon={Package}
             title="Nenhum produto cadastrado"
@@ -212,7 +212,7 @@ export function Stock() {
             />
           </div>
 
-          <div className="table-wrap">
+          <div className="card table-wrap">
             {filtered.length === 0 ? (
               <EmptyState compact title="Nenhum produto encontrado" description="Tente outro nome ou categoria." />
             ) : (

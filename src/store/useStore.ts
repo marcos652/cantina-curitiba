@@ -40,7 +40,6 @@ export interface RemoveStockInput {
 }
 
 export interface Store extends AppData {
-  sidebarCollapsed: boolean
   toasts: Toast[]
 
   addProduct(input: ProductInput, initialLot?: { quantity: number; expiresAt: string }): Product
@@ -64,7 +63,6 @@ export interface Store extends AppData {
   loadDemoData(): void
   resetAll(): void
 
-  toggleSidebar(): void
   notify(message: string, kind?: Toast['kind']): void
   dismissToast(id: string): void
 }
@@ -88,7 +86,6 @@ export const useStore = create<Store>()(
   persist(
     (set, get) => ({
       ...emptyData(),
-      sidebarCollapsed: false,
       toasts: [],
 
       // ---------- Produtos ----------
@@ -396,10 +393,6 @@ export const useStore = create<Store>()(
       },
 
       // ---------- Interface ----------
-      toggleSidebar() {
-        set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed }))
-      },
-
       notify(message, kind = 'ok') {
         const id = uid()
         set((s) => ({ toasts: [...s.toasts, { id, message, kind }] }))
@@ -413,7 +406,7 @@ export const useStore = create<Store>()(
     {
       name: 'cantina-curitiba',
       version: 1,
-      partialize: (s) => ({ ...pickData(s), sidebarCollapsed: s.sidebarCollapsed }),
+      partialize: (s) => pickData(s),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<Store>
         return {

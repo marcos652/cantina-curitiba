@@ -97,7 +97,6 @@ export interface Settings {
   fees: Record<PaymentMethod, number>
   expiryWarningDays: number
   categories: string[]
-  accent: string
 }
 
 export interface AppData {

@@ -36,7 +36,7 @@ Para ativar, uma única vez: no GitHub, abra **Settings → Pages** e em **Build
 - **Vencimentos**: lotes ordenados por validade com status vencido / vencendo / ok e baixa rápida por descarte, registrando o valor perdido.
 - **Caixa**: abertura com valor inicial, sangrias e reforços, fechamento com conferência e saldo esperado em dinheiro.
 - **Relatórios**: vendas por dia, por produto e por forma de pagamento; mais e menos vendidos; lucro estimado; perdas por vencimento. Exportação em CSV.
-- **Configurações**: nome da loja, taxas, dias de aviso de vencimento, categorias, cor de destaque, backup (exportar/importar), dados de exemplo.
+- **Configurações**: nome da loja, taxas, dias de aviso de vencimento, categorias, backup (exportar/importar), dados de exemplo.
 
 ## Tecnologias
 

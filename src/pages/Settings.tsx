@@ -1,11 +1,9 @@
 import { useRef, useState, type ReactNode } from 'react'
-import { Check, Download, Plus, Upload, X } from 'lucide-react'
+import { Download, Plus, Upload, X } from 'lucide-react'
 import { useStore } from '@/store/useStore'
-import { ACCENT_OPTIONS } from '@/store/defaults'
 import { PAYMENT_LABELS, PAYMENT_METHODS } from '@/lib/payments'
 import { todayStr } from '@/lib/dates'
 import { downloadJSON } from '@/lib/download'
-import { cx } from '@/lib/cx'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, NumberInput } from '@/components/ui/Field'
 import { ConfirmDialog } from '@/components/ui/Modal'
@@ -13,9 +11,9 @@ import { PageHeader } from '@/components/ui/PageHeader'
 
 function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
-    <section className="grid grid-cols-1 gap-4 border-b border-line py-6 first:pt-0 last:border-b-0 md:grid-cols-[240px_1fr] md:gap-8">
+    <section className="card mb-4 grid grid-cols-1 gap-4 p-5 md:grid-cols-[260px_1fr] md:gap-8">
       <div>
-        <h2 className="text-sm font-medium">{title}</h2>
+        <h2 className="text-sm font-semibold">{title}</h2>
         {description && <p className="mt-1 text-sm text-muted">{description}</p>}
       </div>
       <div className="max-w-xl">{children}</div>
@@ -127,29 +125,6 @@ export function SettingsPage() {
         </form>
       </Section>
 
-      <Section title="Aparência" description="Cor de destaque dos botões principais e do item ativo do menu.">
-        <div className="flex flex-wrap gap-2">
-          {ACCENT_OPTIONS.map((o) => {
-            const active = settings.accent.toLowerCase() === o.value.toLowerCase()
-            return (
-              <button
-                key={o.value}
-                type="button"
-                title={o.label}
-                onClick={() => updateSettings({ accent: o.value })}
-                className={cx(
-                  'flex h-9 items-center gap-2 rounded border px-3 text-[13px] transition-colors',
-                  active ? 'border-ink' : 'border-line hover:bg-soft',
-                )}
-              >
-                <span className="h-3.5 w-3.5 rounded-full" style={{ background: o.value }} />
-                {o.label}
-                {active && <Check size={14} strokeWidth={1.5} className="text-muted" />}
-              </button>
-            )
-          })}
-        </div>
-      </Section>
 
       <Section title="Dados" description="Tudo fica salvo neste navegador. Exporte um backup de tempos em tempos.">
         <p className="mb-3 text-sm text-muted tabular">

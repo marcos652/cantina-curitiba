@@ -38,65 +38,72 @@ export function Movements() {
       <PageHeader title="Estoque" />
       <Tabs items={STOCK_TABS} />
 
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="relative sm:w-72">
-          <Search size={16} strokeWidth={1.5} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
-          <Input placeholder="Buscar produto" value={query} onChange={(e) => setQuery(e.target.value)} className="pl-9" />
+      <div className="card mb-4">
+        <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
+          <Field label="Produto" className="sm:w-72">
+            <div className="relative">
+              <Search size={15} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
+              <Input placeholder="Buscar produto" value={query} onChange={(e) => setQuery(e.target.value)} className="pl-9" />
+            </div>
+          </Field>
+          <Field label="Tipo" className="sm:w-48">
+            <Select value={type} onChange={(e) => setType(e.target.value as typeof type)}>
+              <option value="todos">Todos os tipos</option>
+              {(Object.keys(TYPE_LABELS) as MovementType[]).map((t) => (
+                <option key={t} value={t}>
+                  {TYPE_LABELS[t]}
+                </option>
+              ))}
+            </Select>
+          </Field>
         </div>
-        <Field className="sm:w-44">
-          <Select value={type} onChange={(e) => setType(e.target.value as typeof type)}>
-            <option value="todos">Todos os tipos</option>
-            {(Object.keys(TYPE_LABELS) as MovementType[]).map((t) => (
-              <option key={t} value={t}>
-                {TYPE_LABELS[t]}
-              </option>
-            ))}
-          </Select>
-        </Field>
       </div>
 
-      <div className="table-wrap">
-        {list.length === 0 ? (
-          <EmptyState
-            icon={History}
-            title="Nenhuma movimentação"
-            description="Entradas, vendas, perdas e descartes aparecem aqui conforme acontecem."
-          />
-        ) : (
-          <table className="table hover">
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Produto</th>
-                <th>Tipo</th>
-                <th className="num">Qtd</th>
-                <th>Validade do lote</th>
-                <th>Observação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.slice(0, LIMIT).map((m) => (
-                <tr key={m.id}>
-                  <td className="tabular whitespace-nowrap text-muted">{formatDateTime(m.createdAt)}</td>
-                  <td className="font-medium">{m.productName}</td>
-                  <td>
-                    <Badge tone={m.type === 'perda' || m.type === 'descarte' ? 'danger' : 'neutral'}>{TYPE_LABELS[m.type]}</Badge>
-                  </td>
-                  <td className="num">
-                    {m.quantity > 0 ? '+' : '−'}
-                    {num(Math.abs(m.quantity))}
-                  </td>
-                  <td className="tabular text-muted">{m.lotExpiresAt ? formatDate(m.lotExpiresAt) : '—'}</td>
-                  <td className="max-w-[260px] truncate text-muted">{m.note ?? '—'}</td>
+      <div className="card">
+        <div className="card-head">
+          <p className="card-title flex items-center gap-2">
+            Movimentações <span className="count-pill">{num(list.length)}</span>
+          </p>
+          {list.length > LIMIT && <span className="text-xs text-muted">Mostrando as {num(LIMIT)} mais recentes</span>}
+        </div>
+        <div className="table-wrap">
+          {list.length === 0 ? (
+            <EmptyState icon={History} title="Nenhuma movimentação" description="Entradas, vendas, perdas e descartes aparecem aqui conforme acontecem." />
+          ) : (
+            <table className="table hover">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Produto</th>
+                  <th>Tipo</th>
+                  <th className="num">Qtd</th>
+                  <th>Validade do lote</th>
+                  <th>Observação</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {list.slice(0, LIMIT).map((m) => (
+                  <tr key={m.id}>
+                    <td className="tabular whitespace-nowrap text-muted">{formatDateTime(m.createdAt)}</td>
+                    <td className="font-medium">{m.productName}</td>
+                    <td>
+                      <Badge tone={m.type === 'perda' || m.type === 'descarte' ? 'danger' : m.type === 'entrada' || m.type === 'cancelamento' ? 'ok' : 'neutral'}>
+                        {TYPE_LABELS[m.type]}
+                      </Badge>
+                    </td>
+                    <td className={`num font-medium ${m.quantity > 0 ? 'text-ok-text' : 'text-ink'}`}>
+                      {m.quantity > 0 ? '+' : '−'}
+                      {num(Math.abs(m.quantity))}
+                    </td>
+                    <td className="tabular text-muted">{m.lotExpiresAt ? formatDate(m.lotExpiresAt) : '—'}</td>
+                    <td className="max-w-[260px] truncate text-muted">{m.note ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
-      {list.length > LIMIT && (
-        <p className="mt-2 text-xs text-faint">Mostrando as {num(LIMIT)} movimentações mais recentes de {num(list.length)}.</p>
-      )}
     </>
   )
 }
