@@ -189,14 +189,14 @@ export function Home() {
         <div className="card">
           <div className="card-head">
             <p className="card-title">Meios de pagamento</p>
-            <span className="text-xs text-muted">Vendas concluídas no período</span>
+            <span className="text-xs text-muted">Participação no faturamento</span>
           </div>
           <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-5">
             {byMethod.map((m) => {
               const Icon = PAYMENT_ICONS[m.method]
               const share = revenue > 0 ? (m.gross / revenue) * 100 : 0
               return (
-                <div key={m.method} className="bg-white px-4 py-4 last:col-span-2 lg:last:col-span-1">
+                <div key={m.method} className="bg-white px-4 py-5 last:col-span-2 lg:last:col-span-1">
                   <p className="kpi-label">
                     <Icon size={15} strokeWidth={1.75} className="text-accent" />
                     <span className="truncate">{PAYMENT_SHORT[m.method]}</span>
@@ -205,16 +205,9 @@ export function Home() {
                   <p className="mt-1.5 text-xs text-muted tabular">
                     {plural(m.count, 'venda', 'vendas')} · {pct(share)}
                   </p>
-                  <dl className="mt-4 space-y-1.5 border-t border-rule pt-3 text-xs">
-                    <div className="flex justify-between gap-2">
-                      <dt className="text-muted">Ticket médio</dt>
-                      <dd className="tabular">{money(m.count ? m.gross / m.count : 0)}</dd>
-                    </div>
-                    <div className="flex justify-between gap-2">
-                      <dt className="text-muted">Taxas</dt>
-                      <dd className="tabular">{m.fees ? `− ${money(m.fees)}` : '—'}</dd>
-                    </div>
-                  </dl>
+                  <div className="mt-3 h-1.5 w-full rounded-full bg-rule">
+                    <div className="h-1.5 rounded-full bg-accent" style={{ width: `${Math.min(100, share)}%` }} />
+                  </div>
                 </div>
               )
             })}
