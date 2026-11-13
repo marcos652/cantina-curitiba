@@ -13,6 +13,7 @@ import { Cash } from '@/pages/Cash'
 import { Reports } from '@/pages/Reports'
 import { SettingsPage } from '@/pages/Settings'
 import { Statement } from '@/pages/Statement'
+import { SaleDetail } from '@/pages/SaleDetail'
 
 export function App() {
   const storeName = useStore((s) => s.settings.storeName)
@@ -28,6 +29,7 @@ export function App() {
           <Route path="/" element={<Home />} />
           <Route path="/vendas" element={<Sales />} />
           <Route path="/vendas/historico" element={<SalesHistory />} />
+          <Route path="/vendas/:id" element={<SaleDetail />} />
           <Route path="/estoque" element={<Stock />} />
           <Route path="/estoque/movimentacoes" element={<Movements />} />
           <Route path="/vencimentos" element={<Expirations />} />

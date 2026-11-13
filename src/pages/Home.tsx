@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CalendarClock, ChevronRight, FileText, Coins, Info, Package, PackageX, Percent, Plus, Receipt, ShoppingBag, TrendingUp, TriangleAlert } from 'lucide-react'
-import type { Product, Sale } from '@/types'
+import type { Product } from '@/types'
 import { useStore } from '@/store/useStore'
 import { expectedCash, lowStockProducts, openSession, salesBetween, sumCost, sumFees, sumTotal, totalsByMethod } from '@/store/selectors'
 import { isoInRange } from '@/lib/dates'
@@ -22,7 +22,6 @@ import { DateRange } from '@/components/ui/DateRange'
 import { AreaChart } from '@/components/charts/AreaChart'
 import { StackedBars } from '@/components/charts/StackedBars'
 import { BarList } from '@/components/charts/BarList'
-import { SaleDetailsModal } from '@/components/SaleDetailsModal'
 
 const SERIES = [
   { name: 'Concluídas', color: '#16A34A' },
@@ -46,7 +45,6 @@ export function Home() {
 
   const [preset, setPreset] = useState<Preset>('hoje')
   const [[from, to], setRange] = useState<[string, string]>(() => presetRange('hoje'))
-  const [detail, setDetail] = useState<Sale | null>(null)
 
   function applyPreset(p: Preset) {
     setPreset(p)
@@ -389,7 +387,7 @@ export function Home() {
             </thead>
             <tbody>
               {recent.map((s) => (
-                <tr key={s.id} className="cursor-pointer" onClick={() => setDetail(s)}>
+                <tr key={s.id} className="cursor-pointer" onClick={() => navigate(`/vendas/${s.id}`)}>
                   <td className="tabular text-muted">#{s.number}</td>
                   <td className="tabular whitespace-nowrap">
                     {formatDate(s.createdAt)} <span className="text-muted">{formatTime(s.createdAt)}</span>
@@ -414,7 +412,6 @@ export function Home() {
         )}
       </div>
 
-      <SaleDetailsModal sale={detail} onClose={() => setDetail(null)} />
 
       <ConfirmDialog
         open={Boolean(discard)}
