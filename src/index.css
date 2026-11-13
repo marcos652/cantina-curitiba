@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --accent: #2e5bff;
+  --accent-hover: color-mix(in srgb, var(--accent), #000 14%);
+  --accent-soft: color-mix(in srgb, var(--accent) 9%, #fff);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-white font-sans font-normal text-ink antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  * {
+    @apply border-line;
+  }
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+  }
+  ::selection {
+    background: var(--accent-soft);
+  }
+  input[type='date']::-webkit-calendar-picker-indicator {
+    opacity: 0.45;
+  }
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  /* Um único estilo de botão em todo o sistema, variando só a cor. */
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded border text-sm font-medium transition-colors duration-150;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1;
+    @apply disabled:pointer-events-none disabled:opacity-40;
+  }
+  .btn-sm {
+    @apply h-8 px-3 text-[13px];
+  }
+  .btn-md {
+    @apply h-9 px-3.5;
+  }
+  .btn-lg {
+    @apply h-11 px-5 text-[15px];
+  }
+  .btn-icon.btn-sm {
+    @apply w-8 px-0;
+  }
+  .btn-icon.btn-md {
+    @apply w-9 px-0;
+  }
+  .btn-icon.btn-lg {
+    @apply w-11 px-0;
+  }
+  .btn-primary {
+    @apply border-accent bg-accent text-white hover:border-accent-hover hover:bg-accent-hover;
+  }
+  .btn-secondary {
+    @apply border-line bg-white text-ink hover:bg-soft;
+  }
+  .btn-ghost {
+    @apply border-transparent bg-transparent text-muted hover:bg-soft hover:text-ink;
+  }
+  .btn-danger {
+    @apply border-line bg-white text-danger hover:border-danger/30 hover:bg-danger-soft;
+  }
+
+  .input {
+    @apply h-9 w-full rounded border border-line bg-white px-3 text-sm text-ink transition-colors placeholder:text-faint;
+    @apply focus:border-ink focus:outline-none disabled:bg-soft disabled:text-muted;
+  }
+  textarea.input {
+    @apply h-auto py-2;
+  }
+  .select {
+    @apply cursor-pointer appearance-none bg-no-repeat pr-8;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239A9A9A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.6rem center;
+  }
+
+  .panel {
+    @apply rounded border border-line bg-white;
+  }
+
+  .table-wrap {
+    @apply panel overflow-x-auto;
+  }
+  .table {
+    @apply w-full text-sm;
+  }
+  .table th {
+    @apply whitespace-nowrap border-b border-line bg-soft px-3 py-2.5 text-left text-xs font-medium text-muted;
+  }
+  .table td {
+    @apply border-b border-line px-3 py-2.5 align-middle;
+  }
+  .table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  .table tbody tr {
+    @apply transition-colors duration-100;
+  }
+  .table.hover tbody tr:hover {
+    @apply bg-soft;
+  }
+  .table .num {
+    @apply text-right tabular;
+  }
+
+  .nav-item {
+    @apply flex h-9 items-center gap-3 rounded px-2.5 text-sm text-muted transition-colors duration-150 hover:bg-soft hover:text-ink;
+  }
+  .nav-item.active {
+    @apply bg-accent-soft font-medium text-accent;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
