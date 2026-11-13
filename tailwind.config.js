@@ -36,7 +36,7 @@ export default {
         DEFAULT: '6px',
         md: '6px',
         lg: '8px',
-        xl: '10px',
+        xl: '14px',
       },
     },
   },
