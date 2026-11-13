@@ -165,9 +165,9 @@ export function Home() {
       </div>
 
       <SectionTitle title="Informação sobre as vendas" />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div className="card flex flex-col">
-          <div className="flex items-start justify-between gap-3 p-4 pb-0">
+      <div className="space-y-4">
+        <div className="card grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+          <div className="flex items-start justify-between gap-3 p-5">
             <div>
               <p className="kpi-label">
                 Faturamento total <Info size={14} strokeWidth={1.75} className="text-faint" />
@@ -181,8 +181,10 @@ export function Home() {
               Detalhar <ChevronRight size={14} strokeWidth={1.75} />
             </Button>
           </div>
-          <div className="mt-auto px-2 pb-2 pt-4">
-            <AreaChart points={cumulative} />
+          <div className="flex items-end px-3 pb-3 pt-2 lg:border-l lg:border-line lg:px-5 lg:pb-4 lg:pt-5">
+            <div className="w-full">
+              <AreaChart points={cumulative} height={120} />
+            </div>
           </div>
         </div>
 
@@ -191,21 +193,21 @@ export function Home() {
             <p className="card-title">Meios de pagamento</p>
             <span className="text-xs text-muted">Vendas concluídas no período</span>
           </div>
-          <div className="grid grid-cols-1 gap-px bg-line sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <div className="overflow-hidden"><div className="-mb-px -mr-px grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
             {byMethod.map((m) => {
               const Icon = PAYMENT_ICONS[m.method]
               const share = revenue > 0 ? (m.gross / revenue) * 100 : 0
               return (
-                <div key={m.method} className="bg-white px-4 py-3.5">
+                <div key={m.method} className="border-b border-r border-line px-5 py-4">
                   <p className="kpi-label">
                     <Icon size={15} strokeWidth={1.75} className="text-accent" />
                     <span className="truncate">{PAYMENT_SHORT[m.method]}</span>
                   </p>
-                  <p className={`mt-1.5 text-[20px] font-bold leading-none tracking-tight tabular ${m.count === 0 ? 'text-faint' : ''}`}>{money(m.gross)}</p>
+                  <p className={`mt-2 text-[22px] font-bold leading-none tracking-tight tabular ${m.count === 0 ? 'text-faint' : ''}`}>{money(m.gross)}</p>
                   <p className="mt-1.5 text-xs text-muted tabular">
                     {plural(m.count, 'venda', 'vendas')} · {pct(share)}
                   </p>
-                  <dl className="mt-3 space-y-1 border-t border-rule pt-2.5 text-xs">
+                  <dl className="mt-4 space-y-1.5 border-t border-rule pt-3 text-xs">
                     <div className="flex justify-between gap-2">
                       <dt className="text-muted">Ticket médio</dt>
                       <dd className="tabular">{money(m.count ? m.gross / m.count : 0)}</dd>
@@ -218,7 +220,7 @@ export function Home() {
                 </div>
               )
             })}
-          </div>
+          </div></div>
         </div>
       </div>
 
