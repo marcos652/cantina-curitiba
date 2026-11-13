@@ -197,3 +197,19 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+  body {
+    background: #fff !important;
+  }
+  .card {
+    box-shadow: none !important;
+    border-radius: 6px !important;
+  }
+  .table-wrap {
+    overflow: visible !important;
+  }
+}

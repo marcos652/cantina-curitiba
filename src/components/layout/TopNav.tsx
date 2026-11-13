@@ -52,7 +52,7 @@ export function CashStatus({ className }: { className?: string }) {
 
 export function TopNav({ onOpenMenu }: { onOpenMenu: () => void }) {
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-white">
+    <header className="sticky top-0 z-30 border-b border-line bg-white print:hidden">
       <div className="mx-auto flex h-12 max-w-[1280px] items-center gap-3 px-4 md:px-6">
         <Button variant="ghost" icon onClick={onOpenMenu} aria-label="Abrir menu" className="-ml-2 lg:hidden">
           <Menu size={20} strokeWidth={1.75} />
@@ -76,7 +76,7 @@ export function TopNav({ onOpenMenu }: { onOpenMenu: () => void }) {
 
 export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
-    <div className={cx('fixed inset-0 z-40 lg:hidden', open ? '' : 'pointer-events-none')} aria-hidden={!open}>
+    <div className={cx('fixed inset-0 z-40 print:hidden lg:hidden', open ? '' : 'pointer-events-none')} aria-hidden={!open}>
       <div className={cx('absolute inset-0 bg-ink/30 transition-opacity duration-150', open ? 'opacity-100' : 'opacity-0')} onClick={onClose} />
       <aside
         className={cx(

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CalendarClock, ChevronRight, Coins, Info, Package, PackageX, Percent, Plus, Receipt, ShoppingBag, TrendingUp, TriangleAlert } from 'lucide-react'
+import { CalendarClock, ChevronRight, FileText, Coins, Info, Package, PackageX, Percent, Plus, Receipt, ShoppingBag, TrendingUp, TriangleAlert } from 'lucide-react'
 import type { Product, Sale } from '@/types'
 import { useStore } from '@/store/useStore'
 import { expectedCash, lowStockProducts, openSession, salesBetween, sumCost, sumFees, sumTotal, totalsByMethod } from '@/store/selectors'
@@ -112,6 +112,9 @@ export function Home() {
   return (
     <>
       <PageHeader title="Início">
+        <Button size="sm" onClick={() => navigate('/extrato')}>
+          <FileText size={14} strokeWidth={1.75} /> Extrato do dia
+        </Button>
         <Button variant="soft" size="sm" onClick={() => navigate('/vendas')}>
           <Plus size={14} strokeWidth={2} /> Nova venda
         </Button>

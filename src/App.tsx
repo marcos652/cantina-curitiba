@@ -12,6 +12,7 @@ import { Expirations } from '@/pages/Expirations'
 import { Cash } from '@/pages/Cash'
 import { Reports } from '@/pages/Reports'
 import { SettingsPage } from '@/pages/Settings'
+import { Statement } from '@/pages/Statement'
 
 export function App() {
   const storeName = useStore((s) => s.settings.storeName)
@@ -31,6 +32,7 @@ export function App() {
           <Route path="/estoque/movimentacoes" element={<Movements />} />
           <Route path="/vencimentos" element={<Expirations />} />
           <Route path="/caixa" element={<Cash />} />
+          <Route path="/extrato" element={<Statement />} />
           <Route path="/relatorios" element={<Reports />} />
           <Route path="/configuracoes" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

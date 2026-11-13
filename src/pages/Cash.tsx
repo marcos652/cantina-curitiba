@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ArrowDownToLine, ArrowUpFromLine, Lock, Wallet } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, FileText, Lock, Wallet } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useStore } from '@/store/useStore'
 import { expectedCash, openSession, sessionSales, sumFees, sumNet, sumTotal, totalsByMethod } from '@/store/selectors'
 import { formatDateTime, formatTime, money, num } from '@/lib/format'
@@ -21,6 +22,7 @@ function DiffLabel({ diff }: { diff: number }) {
 }
 
 export function Cash() {
+  const navigate = useNavigate()
   const sessions = useStore((s) => s.cashSessions)
   const sales = useStore((s) => s.sales)
   const addCashMovement = useStore((s) => s.addCashMovement)
@@ -71,6 +73,9 @@ export function Cash() {
         title="Caixa"
         description={session ? `Aberto em ${formatDateTime(session.openedAt)}` : 'Nenhum caixa aberto'}
       >
+        <Button onClick={() => navigate('/extrato')}>
+          <FileText size={16} strokeWidth={1.75} /> Extrato do dia
+        </Button>
         {session ? (
           <>
             <Button onClick={() => openMovement('sangria')}>
