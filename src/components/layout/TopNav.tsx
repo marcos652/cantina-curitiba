@@ -17,11 +17,16 @@ export const NAV = [
 
 function Brand() {
   const name = useStore((s) => s.settings.storeName)
+  const logo = useStore((s) => s.settings.logo)
   return (
     <Link to="/" className="flex items-center gap-2">
-      <span className="flex h-7 w-7 items-center justify-center rounded-md bg-accent text-white">
-        <Croissant size={16} strokeWidth={2} />
-      </span>
+      {logo ? (
+        <img src={logo} alt={`Logo ${name}`} className="h-8 max-w-[96px] object-contain" />
+      ) : (
+        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-accent text-white">
+          <Croissant size={16} strokeWidth={2} />
+        </span>
+      )}
       <span className="max-w-[160px] truncate text-sm font-semibold tracking-tight">{name || 'Cantina'}</span>
     </Link>
   )

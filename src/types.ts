@@ -96,6 +96,8 @@ export interface Settings {
   storeName: string
   fees: Record<PaymentMethod, number>
   expiryWarningDays: number
+  /** Logo da cantina em data URL (PNG/JPEG reduzido). */
+  logo?: string
   categories: string[]
 }
 

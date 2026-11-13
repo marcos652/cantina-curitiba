@@ -1,9 +1,10 @@
 import { useRef, useState, type ReactNode } from 'react'
-import { Download, Plus, Upload, X } from 'lucide-react'
+import { Download, Image as ImageIcon, Plus, Upload, X } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { PAYMENT_LABELS, PAYMENT_METHODS } from '@/lib/payments'
 import { todayStr } from '@/lib/dates'
 import { downloadJSON } from '@/lib/download'
+import { fileToLogo } from '@/lib/image'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, NumberInput } from '@/components/ui/Field'
 import { ConfirmDialog } from '@/components/ui/Modal'
@@ -37,6 +38,16 @@ export function SettingsPage() {
   const [confirmDemo, setConfirmDemo] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const logoRef = useRef<HTMLInputElement>(null)
+
+  async function sendLogo(file: File) {
+    try {
+      updateSettings({ logo: await fileToLogo(file) })
+      notify('Logo atualizada.')
+    } catch {
+      notify('Não foi possível ler essa imagem.', 'error')
+    }
+  }
 
   function addCategory() {
     const c = newCategory.trim()
@@ -69,10 +80,38 @@ export function SettingsPage() {
     <>
       <PageHeader title="Configurações" description="As alterações são salvas automaticamente." />
 
-      <Section title="Loja" description="Nome exibido no menu e na aba do navegador.">
-        <Field label="Nome">
-          <Input value={settings.storeName} onChange={(e) => updateSettings({ storeName: e.target.value })} />
+      <Section title="Identidade" description="Nome e logo aparecem no canto superior esquerdo e na aba do navegador.">
+        <Field label="Nome da cantina">
+          <Input value={settings.storeName} onChange={(e) => updateSettings({ storeName: e.target.value })} placeholder="Ex.: Cantina do Zé" />
         </Field>
+        <div className="mt-4">
+          <p className="mb-1.5 text-[13px] font-medium text-muted">Logo</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex h-14 w-24 items-center justify-center rounded-md border border-dashed border-control bg-raised">
+              {settings.logo ? <img src={settings.logo} alt="Logo atual" className="max-h-12 max-w-[88px] object-contain" /> : <ImageIcon size={20} strokeWidth={1.5} className="text-faint" />}
+            </div>
+            <Button onClick={() => logoRef.current?.click()}>
+              <Upload size={16} strokeWidth={1.75} /> {settings.logo ? 'Trocar logo' : 'Enviar logo'}
+            </Button>
+            {settings.logo && (
+              <Button variant="ghost" onClick={() => updateSettings({ logo: undefined })}>
+                Remover
+              </Button>
+            )}
+            <input
+              ref={logoRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) void sendLogo(f)
+                e.target.value = ''
+              }}
+            />
+          </div>
+          <p className="mt-1.5 text-xs text-faint">PNG, JPG, WebP ou SVG. A imagem é reduzida automaticamente.</p>
+        </div>
       </Section>
 
       <Section title="Taxas da maquininha" description="Percentual descontado em cada forma de pagamento. Usado para calcular o valor líquido.">
