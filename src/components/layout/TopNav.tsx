@@ -53,7 +53,7 @@ export function CashStatus({ className }: { className?: string }) {
 export function TopNav({ onOpenMenu }: { onOpenMenu: () => void }) {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-white print:hidden">
-      <div className="mx-auto flex h-12 max-w-[1280px] items-center gap-3 px-4 md:px-6">
+      <div className="flex h-12 w-full items-center gap-3 px-4 md:px-8">
         <Button variant="ghost" icon onClick={onOpenMenu} aria-label="Abrir menu" className="-ml-2 lg:hidden">
           <Menu size={20} strokeWidth={1.75} />
         </Button>
