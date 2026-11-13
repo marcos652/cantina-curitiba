@@ -11,9 +11,14 @@ function readAsDataURL(file: Blob): Promise<string> {
 }
 
 /** Lê a imagem e a reduz para caber em 320x120, mantendo a transparência (PNG). SVG é guardado como está. */
+export const MAX_LOGO_CHARS = 400_000 // o documento de configurações do banco aceita até 1 MB
+
 export async function fileToLogo(file: File): Promise<string> {
   const src = await readAsDataURL(file)
-  if (file.type === 'image/svg+xml') return src
+  if (file.type === 'image/svg+xml') {
+    if (src.length > MAX_LOGO_CHARS) throw new Error('logo-grande')
+    return src
+  }
   const img = new Image()
   await new Promise<void>((resolve, reject) => {
     img.onload = () => resolve()
@@ -29,5 +34,7 @@ export async function fileToLogo(file: File): Promise<string> {
   const ctx = canvas.getContext('2d')
   if (!ctx) return src
   ctx.drawImage(img, 0, 0, w, h)
-  return canvas.toDataURL('image/png')
+  const out = canvas.toDataURL('image/png')
+  if (out.length > MAX_LOGO_CHARS) throw new Error('logo-grande')
+  return out
 }

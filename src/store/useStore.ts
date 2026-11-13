@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import type { AppData, Lot, PaymentMethod, Product, Sale, SaleItem, SalePayment, Settings, StockMovement } from '@/types'
 import { uid } from '@/lib/ids'
 import { nowISO } from '@/lib/dates'
@@ -62,6 +61,8 @@ export interface Store extends AppData {
   exportData(): string
   importData(json: string): Result
   loadDemoData(): void
+  hydrate(data: AppData): void
+  clear(): void
   resetAll(): void
 
   notify(message: string, kind?: Toast['kind']): void
@@ -83,9 +84,7 @@ function pickData(s: AppData): AppData {
   }
 }
 
-export const useStore = create<Store>()(
-  persist(
-    (set, get) => ({
+export const useStore = create<Store>()((set, get) => ({
       ...emptyData(),
       toasts: [],
 
@@ -392,6 +391,14 @@ export const useStore = create<Store>()(
         set({ ...buildDemoData(), settings: { ...get().settings } })
       },
 
+      hydrate(data) {
+        set({ ...data })
+      },
+
+      clear() {
+        set({ ...emptyData(), toasts: [] })
+      },
+
       resetAll() {
         set({ ...emptyData() })
       },
@@ -406,23 +413,4 @@ export const useStore = create<Store>()(
       dismissToast(id) {
         set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }))
       },
-    }),
-    {
-      name: 'cantina-curitiba',
-      version: 1,
-      partialize: (s) => pickData(s),
-      merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<Store>
-        return {
-          ...current,
-          ...p,
-          settings: {
-            ...DEFAULT_SETTINGS,
-            ...(p.settings ?? {}),
-            fees: { ...DEFAULT_SETTINGS.fees, ...(p.settings?.fees ?? {}) },
-          },
-        }
-      },
-    },
-  ),
-)
+}))

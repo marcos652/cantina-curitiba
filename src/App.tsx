@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { Toaster } from '@/components/ui/Toaster'
+import { AuthGate } from '@/components/AuthGate'
 import { useStore } from '@/store/useStore'
 import { Home } from '@/pages/Home'
 import { Sales } from '@/pages/Sales'
@@ -23,6 +24,7 @@ export function App() {
   }, [storeName])
 
   return (
+    <AuthGate>
     <HashRouter>
       <AppShell>
         <Routes>
@@ -42,5 +44,6 @@ export function App() {
       </AppShell>
       <Toaster />
     </HashRouter>
+    </AuthGate>
   )
 }

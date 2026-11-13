@@ -44,8 +44,8 @@ export function SettingsPage() {
     try {
       updateSettings({ logo: await fileToLogo(file) })
       notify('Logo atualizada.')
-    } catch {
-      notify('Não foi possível ler essa imagem.', 'error')
+    } catch (e) {
+      notify((e as Error).message === 'logo-grande' ? 'Essa logo é pesada demais. Use uma imagem menor.' : 'Não foi possível ler essa imagem.', 'error')
     }
   }
 
@@ -165,7 +165,7 @@ export function SettingsPage() {
       </Section>
 
 
-      <Section title="Dados" description="Tudo fica salvo neste navegador. Exporte um backup de tempos em tempos.">
+      <Section title="Dados" description="Tudo fica salvo no banco de dados da sua conta e aparece em qualquer aparelho em que você entrar. O backup em arquivo é uma cópia extra.">
         <p className="mb-3 text-sm text-muted tabular">
           {counts.products} {counts.products === 1 ? 'produto' : 'produtos'} · {counts.sales} {counts.sales === 1 ? 'venda' : 'vendas'}
         </p>
@@ -202,7 +202,7 @@ export function SettingsPage() {
           notify('Dados de exemplo carregados.')
         }}
         title="Carregar dados de exemplo?"
-        message="Produtos, vendas e caixas atuais serão substituídos pelos dados de exemplo. As configurações são mantidas."
+        message="Produtos, vendas e caixas atuais serão substituídos pelos dados de exemplo, e a troca também é salva no banco de dados. As configurações são mantidas."
         confirmLabel="Carregar"
       />
       <ConfirmDialog
@@ -213,7 +213,7 @@ export function SettingsPage() {
           notify('Todos os dados foram apagados.')
         }}
         title="Apagar todos os dados?"
-        message="Produtos, estoque, vendas, caixas e configurações serão removidos deste navegador. Esta ação não pode ser desfeita."
+        message="Produtos, estoque, vendas, caixas e configurações serão apagados do banco de dados, em todos os aparelhos. Esta ação não pode ser desfeita."
         confirmLabel="Apagar tudo"
         danger
       />

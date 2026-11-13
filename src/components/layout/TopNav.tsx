@@ -1,9 +1,11 @@
 import { Link, NavLink } from 'react-router-dom'
-import { BarChart3, CalendarClock, Croissant, Home, Menu, Package, Settings, ShoppingBag, Wallet, X } from 'lucide-react'
+import { BarChart3, CalendarClock, Croissant, Home, LogOut, Menu, Package, Settings, ShoppingBag, Wallet, X } from 'lucide-react'
 import { cx } from '@/lib/cx'
 import { useStore } from '@/store/useStore'
 import { openSession } from '@/store/selectors'
 import { Button } from '@/components/ui/Button'
+import { useSession } from '@/store/session'
+import { logout } from '@/store/boot'
 
 export const NAV = [
   { to: '/', label: 'Início', icon: Home, end: true },
@@ -50,6 +52,33 @@ export function CashStatus({ className }: { className?: string }) {
   )
 }
 
+const SYNC_LABEL = { ok: 'Dados salvos', syncing: 'Salvando...', offline: 'Sem internet', error: 'Erro ao salvar' } as const
+const SYNC_DOT = { ok: 'bg-ok', syncing: 'bg-warn', offline: 'bg-warn', error: 'bg-danger' } as const
+
+function SyncBadge() {
+  const sync = useSession((s) => s.sync)
+  const memory = useSession((s) => s.memory)
+  if (memory) return <span className="hidden h-8 items-center rounded-md bg-warn-soft px-2.5 text-xs font-medium text-warn-text sm:inline-flex">Demonstração, nada é salvo</span>
+  return (
+    <span title={SYNC_LABEL[sync]} className="hidden h-8 items-center gap-2 px-1 text-xs text-muted md:inline-flex">
+      <span className={cx('h-2 w-2 rounded-full', SYNC_DOT[sync])} />
+      {SYNC_LABEL[sync]}
+    </span>
+  )
+}
+
+function UserMenu() {
+  const email = useSession((s) => s.user?.email)
+  return (
+    <div className="flex items-center gap-1">
+      {email && <span className="hidden max-w-[180px] truncate text-xs text-muted xl:inline">{email}</span>}
+      <Button variant="ghost" size="sm" icon onClick={() => void logout()} title="Sair" aria-label="Sair">
+        <LogOut size={16} strokeWidth={1.75} />
+      </Button>
+    </div>
+  )
+}
+
 export function TopNav({ onOpenMenu }: { onOpenMenu: () => void }) {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-white print:hidden">
@@ -67,7 +96,9 @@ export function TopNav({ onOpenMenu }: { onOpenMenu: () => void }) {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <SyncBadge />
           <CashStatus />
+          <UserMenu />
         </div>
       </div>
     </header>

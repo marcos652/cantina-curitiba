@@ -2,7 +2,21 @@
 
 Sistema web de gestão para cantina de salgados: vendas, estoque por lote, vencimentos, caixa e relatórios. Em português do Brasil, responsivo (desktop, tablet e celular) e com visual limpo em fundo branco.
 
-Os dados ficam salvos no próprio navegador (localStorage) e persistem entre sessões. Não há servidor nem banco de dados externo. Use **Configurações → Exportar backup** para guardar uma cópia em arquivo.
+Os dados ficam salvos no **Firebase (Firestore)**, em uma conta protegida por login, e aparecem em qualquer aparelho em que você entrar. A logo da cantina é guardada em base64 dentro das configurações. O sistema também funciona sem internet: grava no aparelho e envia quando a conexão volta. Use **Configurações → Exportar backup** para guardar uma cópia em arquivo.
+
+## Firebase (banco de dados e login)
+
+Projeto: `cantina-5a4c5`. Passos, uma única vez, no [console do Firebase](https://console.firebase.google.com/):
+
+1. **Authentication**: clique em *Começar* e ative o provedor **E-mail/senha**.
+2. **Authentication → Usuários**: adicione o e-mail e a senha de quem vai usar o sistema (um usuário por cantina).
+3. **Firestore Database**: crie o banco, se ainda não existir.
+4. **Firestore → Regras**: cole o conteúdo de `firestore.rules` e publique. Ou, com o Firebase CLI: `firebase deploy --only firestore:rules`.
+5. **Authentication → Configurações → Domínios autorizados**: adicione `marcos652.github.io` para o site publicado no GitHub Pages (o `localhost` já vem liberado).
+
+Cada usuário só enxerga os próprios dados (`lojas/{uid}/...`), então várias cantinas podem usar o mesmo projeto sem se misturar.
+
+Para testar sem login e sem gravar nada, abra o sistema com `?backend=memory` no endereço (acrescente `&demo=1` para carregar dados de exemplo).
 
 ## Rodando localmente
 
@@ -40,7 +54,7 @@ Para ativar, uma única vez: no GitHub, abra **Settings → Pages** e em **Build
 
 ## Tecnologias
 
-React 18, TypeScript, Vite, Tailwind CSS, Zustand (persistência em localStorage), React Router e ícones Lucide.
+React 18, TypeScript, Vite, Tailwind CSS, Zustand, React Router, ícones Lucide e Firebase (Authentication e Firestore).
 
 ## Estrutura
 
