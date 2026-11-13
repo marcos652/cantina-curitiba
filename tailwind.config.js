@@ -2,7 +2,7 @@
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   // Classes montadas dinamicamente em Button.tsx (`btn-${variant}`, `btn-${size}`).
-  safelist: ['btn-primary', 'btn-secondary', 'btn-ghost', 'btn-danger', 'btn-sm', 'btn-md', 'btn-lg', 'btn-icon'],
+  safelist: ['btn-primary', 'btn-soft', 'btn-secondary', 'btn-ghost', 'btn-danger', 'btn-sm', 'btn-md', 'btn-lg', 'btn-icon'],
   theme: {
     extend: {
       fontFamily: {

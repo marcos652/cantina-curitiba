@@ -90,8 +90,8 @@ export function Home() {
   return (
     <>
       <PageHeader title="Início">
-        <Button variant="primary" onClick={() => navigate('/vendas')}>
-          <Plus size={16} strokeWidth={1.75} /> Nova venda
+        <Button variant="soft" size="sm" onClick={() => navigate('/vendas')}>
+          <Plus size={14} strokeWidth={2} /> Nova venda
         </Button>
       </PageHeader>
 

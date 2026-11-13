@@ -76,6 +76,9 @@
   .btn-primary {
     @apply border-accent bg-accent text-white hover:border-accent-hover hover:bg-accent-hover;
   }
+  .btn-soft {
+    @apply border-transparent bg-accent-soft text-accent hover:bg-accent hover:text-white;
+  }
   .btn-secondary {
     @apply border-control bg-white text-ink hover:bg-raised;
   }
