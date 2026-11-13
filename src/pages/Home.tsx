@@ -134,9 +134,9 @@ export function Home() {
 
       <div className="card mb-5">
         <div className="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
+          <div className="min-w-0">
             <p className="text-[15px] font-semibold leading-tight">Visão geral</p>
-            <p className="mt-0.5 text-xs text-muted">
+            <p className="mt-0.5 truncate text-xs text-muted">
               {periodLabel(from, to)}
               {session && (
                 <>
@@ -148,7 +148,7 @@ export function Home() {
               )}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 lg:shrink-0 lg:flex-nowrap">
             <DateRange
               from={from}
               to={to}
