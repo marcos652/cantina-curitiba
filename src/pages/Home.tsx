@@ -1,0 +1,536 @@
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { CalendarClock, ChevronRight, FileText, Coins, Info, Package, PackageX, Percent, Plus, Receipt, ShoppingBag, TrendingUp, TriangleAlert } from 'lucide-react'
+import type { Product } from '@/types'
+import { useStore } from '@/store/useStore'
+import { expectedCash, lowStockProducts, openSession, salesBetween, sumCost, sumFees, sumTotal, totalsByMethod } from '@/store/selectors'
+import { isoInRange } from '@/lib/dates'
+import { formatTime, formatDate, money, num, pct, plural } from '@/lib/format'
+import { PAYMENT_ICONS, PAYMENT_LABELS, PAYMENT_SHORT, paymentDescription, round2 } from '@/lib/payments'
+import { lotStatus, sellableStock } from '@/lib/stock'
+import { PRESET_OPTIONS, cumulativePoints, periodLabel, presetRange, previousPeriod, salesBuckets, type Preset } from '@/lib/periods'
+import { addDays, todayStr } from '@/lib/dates'
+import { Field, Input, NumberInput } from '@/components/ui/Field'
+import { ConfirmDialog, Modal } from '@/components/ui/Modal'
+import { Button } from '@/components/ui/Button'
+import { PageHeader, SectionTitle } from '@/components/ui/PageHeader'
+import { Kpi, KpiStrip } from '@/components/ui/Stat'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Badge } from '@/components/ui/Badge'
+import { Chips } from '@/components/ui/Tabs'
+import { DateRange } from '@/components/ui/DateRange'
+import { AreaChart } from '@/components/charts/AreaChart'
+import { StackedBars } from '@/components/charts/StackedBars'
+import { BarList } from '@/components/charts/BarList'
+
+const SERIES = [
+  { name: 'Concluídas', color: '#16A34A' },
+  { name: 'Canceladas', color: '#DC2626' },
+]
+
+export function Home() {
+  const navigate = useNavigate()
+  const products = useStore((s) => s.products)
+  const lots = useStore((s) => s.lots)
+  const sales = useStore((s) => s.sales)
+  const sessions = useStore((s) => s.cashSessions)
+  const settings = useStore((s) => s.settings)
+  const loadDemo = useStore((s) => s.loadDemoData)
+  const notify = useStore((s) => s.notify)
+  const removeStock = useStore((s) => s.removeStock)
+  const addLot = useStore((s) => s.addLot)
+  const [discard, setDiscard] = useState<{ lotId: string; productId: string; name: string; quantity: number; cost: number } | null>(null)
+  const [restock, setRestock] = useState<Product | null>(null)
+  const [restockForm, setRestockForm] = useState({ quantity: 0, expiresAt: addDays(todayStr(), 7) })
+
+  const [preset, setPreset] = useState<Preset>('hoje')
+  const [[from, to], setRange] = useState<[string, string]>(() => presetRange('hoje'))
+
+  function applyPreset(p: Preset) {
+    setPreset(p)
+    if (p !== 'custom') setRange(presetRange(p))
+  }
+
+  const list = useMemo(() => salesBetween(sales, from, to), [sales, from, to])
+  const canceled = useMemo(() => sales.filter((s) => s.status === 'cancelada' && isoInRange(s.createdAt, from, to)), [sales, from, to])
+  const revenue = sumTotal(list)
+  const count = list.length
+  const prev = useMemo(() => {
+    const p = previousPeriod(from, to)
+    let prevList = salesBetween(sales, p.from, p.to)
+    if (p.untilNow) {
+      const now = new Date()
+      const limit = now.getHours() * 60 + now.getMinutes()
+      prevList = prevList.filter((s) => {
+        const d = new Date(s.createdAt)
+        return d.getHours() * 60 + d.getMinutes() <= limit
+      })
+    }
+    return { label: p.label, revenue: sumTotal(prevList) }
+  }, [sales, from, to])
+  const diff = round2(revenue - prev.revenue)
+  const ticket = count ? round2(revenue / count) : 0
+  const fees = sumFees(list)
+  const cost = sumCost(list)
+  const profit = round2(revenue - cost - fees)
+  const net = round2(revenue - fees)
+  const byMethod = useMemo(() => totalsByMethod(list), [list])
+  const singleDay = from === to
+  const buckets = useMemo(() => salesBuckets(list, canceled, from, to), [list, canceled, from, to])
+  const cumulative = useMemo(() => cumulativePoints(list, singleDay), [list, singleDay])
+  const methodRows = byMethod
+    .filter((m) => m.count > 0)
+    .sort((a, b) => b.gross - a.gross)
+    .map((m) => ({ key: m.method, label: PAYMENT_LABELS[m.method], value: m.gross, display: money(m.gross), pct: revenue > 0 ? (m.gross / revenue) * 100 : 0 }))
+  const totalAll = count + canceled.length
+  const okPct = totalAll > 0 ? (count / totalAll) * 100 : 0
+
+  const session = openSession(sessions)
+  const cash = session ? expectedCash(session, sales) : null
+
+  const activeLots = lots.filter((l) => l.quantity > 0)
+  const withProduct = (l: (typeof activeLots)[number]) => ({ lot: l, product: products.find((p) => p.id === l.productId) })
+  const expired = activeLots.filter((l) => lotStatus(l, settings.expiryWarningDays) === 'vencido').map(withProduct).filter((x) => x.product)
+  const expiring = activeLots.filter((l) => lotStatus(l, settings.expiryWarningDays) === 'vencendo').map(withProduct).filter((x) => x.product)
+  const low = lowStockProducts(products, lots)
+  const recent = useMemo(() => [...sales].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 6), [sales])
+
+  const alertText =
+    expired.length > 0 || expiring.length > 0
+      ? [
+          expired.length > 0 ? `${plural(expired.length, 'lote vencido', 'lotes vencidos')}` : '',
+          expiring.length > 0 ? `${plural(expiring.length, 'lote vencendo', 'lotes vencendo')} em até ${settings.expiryWarningDays} dias` : '',
+        ]
+          .filter(Boolean)
+          .join(' e ')
+      : low.length > 0
+        ? `${plural(low.length, 'produto', 'produtos')} com estoque baixo`
+        : ''
+
+  return (
+    <>
+      <PageHeader title="Início">
+        <Button size="sm" onClick={() => navigate('/extrato')}>
+          <FileText size={14} strokeWidth={1.75} /> Extrato do dia
+        </Button>
+        <Button variant="soft" size="sm" onClick={() => navigate('/vendas')}>
+          <Plus size={14} strokeWidth={2} /> Nova venda
+        </Button>
+      </PageHeader>
+
+      {products.length === 0 && (
+        <div className="notice mb-4 flex-wrap items-center justify-between">
+          <span className="flex items-center gap-2.5">
+            <Info size={16} strokeWidth={1.75} className="shrink-0 text-warn-text" />
+            <span>
+              <span className="font-medium">Seu sistema está vazio.</span> Cadastre produtos e abra o caixa para ver os números aqui.
+            </span>
+          </span>
+          <span className="flex flex-wrap gap-2">
+            <Button variant="primary" size="sm" onClick={() => navigate('/estoque?novo=1')}>
+              <Plus size={14} strokeWidth={1.75} /> Cadastrar produto
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                loadDemo()
+                notify('Dados de exemplo carregados.')
+              }}
+            >
+              Carregar dados de exemplo
+            </Button>
+          </span>
+        </div>
+      )}
+
+      {alertText && (
+        <div className="notice mb-4">
+          <TriangleAlert size={16} strokeWidth={1.75} className={expired.length > 0 ? 'mt-px shrink-0 text-danger' : 'mt-px shrink-0 text-warn-text'} />
+          <span>
+            <span className="font-medium">{alertText}.</span>{' '}
+            <Link to={expired.length > 0 || expiring.length > 0 ? '/vencimentos' : '/estoque'} className="link">
+              {expired.length > 0 || expiring.length > 0 ? 'Ver vencimentos' : 'Ver estoque'} <ChevronRight size={14} />
+            </Link>
+          </span>
+        </div>
+      )}
+
+      <div className="card mb-5">
+        <div className="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[15px] font-semibold leading-tight">Visão geral</p>
+            <p className="mt-0.5 truncate text-xs text-muted">
+              {periodLabel(from, to)}
+              {session && (
+                <>
+                  {' · '}
+                  <Link to="/caixa" className="hover:text-ink">
+                    {money(cash ?? 0)} na gaveta
+                  </Link>
+                </>
+              )}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 lg:shrink-0 lg:flex-nowrap">
+            <DateRange
+              from={from}
+              to={to}
+              onChange={(f, t) => {
+                setPreset('custom')
+                setRange([f, t])
+              }}
+            />
+            <Chips value={preset} onChange={applyPreset} options={PRESET_OPTIONS} />
+          </div>
+        </div>
+      </div>
+
+      <SectionTitle title="Informação sobre as vendas" />
+      <div className="space-y-4">
+        <div className="card grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+          <div className="flex items-start justify-between gap-3 p-4">
+            <div>
+              <p className="kpi-label">
+                Faturamento total <Info size={14} strokeWidth={1.75} className="text-faint" />
+              </p>
+              <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2">
+                <span className="text-[30px] font-bold leading-none tracking-tight tabular">{money(revenue)}</span>
+                <span className="text-[13px] text-muted tabular">{plural(count, 'venda', 'vendas')}</span>
+              </p>
+              <p className="mt-2 text-xs text-muted tabular">
+                {prev.revenue === 0 && revenue === 0 ? (
+                  <>Sem vendas, nem em {prev.label}</>
+                ) : diff === 0 ? (
+                  <>Igual a {prev.label}</>
+                ) : (
+                  <>
+                    <span className={`font-semibold ${diff > 0 ? 'text-ok-text' : 'text-danger-text'}`}>
+                      {diff > 0 ? '+' : '−'} {money(Math.abs(diff))}
+                    </span>{' '}
+                    em relação a {prev.label} ({money(prev.revenue)})
+                  </>
+                )}
+              </p>
+            </div>
+            <Button size="sm" onClick={() => navigate('/vendas/historico')}>
+              Detalhar <ChevronRight size={14} strokeWidth={1.75} />
+            </Button>
+          </div>
+          <div className="flex items-end px-3 pb-3 pt-2 lg:border-l lg:border-line lg:px-5 lg:pb-4 lg:pt-5">
+            <div className="w-full">
+              <AreaChart points={cumulative} height={120} />
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-head">
+            <p className="card-title">Meios de pagamento</p>
+            <span className="text-xs text-muted">Participação no faturamento</span>
+          </div>
+          <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-5">
+            {byMethod.map((m) => {
+              const Icon = PAYMENT_ICONS[m.method]
+              const share = revenue > 0 ? (m.gross / revenue) * 100 : 0
+              return (
+                <div key={m.method} className="bg-white px-4 py-5 last:col-span-2 lg:last:col-span-1">
+                  <p className="kpi-label">
+                    <Icon size={15} strokeWidth={1.75} className="text-accent" />
+                    <span className="truncate">{PAYMENT_SHORT[m.method]}</span>
+                  </p>
+                  <p className={`mt-2 text-[22px] font-bold leading-none tracking-tight tabular ${m.count === 0 ? 'text-faint' : ''}`}>{money(m.gross)}</p>
+                  <p className="mt-1.5 text-xs text-muted tabular">
+                    {plural(m.count, 'venda', 'vendas')} · {pct(share)}
+                  </p>
+                  <div className="mt-3 h-1.5 w-full rounded-full bg-rule">
+                    <div className="h-1.5 rounded-full bg-accent" style={{ width: `${Math.min(100, share)}%` }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      <SectionTitle title="Resumo financeiro" />
+      <KpiStrip cols={5}>
+        <Kpi icon={Receipt} label="Ticket médio" value={money(ticket)} />
+        <Kpi icon={Percent} label="Taxas da maquininha" value={money(fees)} />
+        <Kpi icon={Package} label="Custo dos produtos" value={money(cost)} />
+        <Kpi icon={TrendingUp} label="Lucro estimado" value={money(profit)} tone={profit < 0 ? 'danger' : 'ink'} />
+        <Kpi icon={Coins} label="Líquido a receber" value={money(net)} highlight />
+      </KpiStrip>
+
+      <SectionTitle title="Distribuição das vendas" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="card">
+          <div className="card-head">
+            <p className="card-title">Vendas por {singleDay ? 'hora' : 'dia'}</p>
+          </div>
+          <div className="card-body">
+            <StackedBars data={buckets} series={SERIES} formatY={(v) => (v >= 1000 ? `R$ ${num(Math.round(v / 1000))} mil` : `R$ ${num(Math.round(v))}`)} />
+          </div>
+          <div className="card-foot">
+            <Info size={14} strokeWidth={1.75} className="mt-px shrink-0 text-faint" />
+            {totalAll > 0 ? (
+              <span>
+                No período, <span className="font-medium text-ok-text">{pct(okPct)} das vendas foram concluídas</span>
+                {canceled.length > 0 && <> e {pct(100 - okPct)} foram canceladas</>}.
+              </span>
+            ) : (
+              <span>Nenhuma venda registrada no período.</span>
+            )}
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-head">
+            <p className="card-title">Distribuição por forma de pagamento</p>
+          </div>
+          <div className="card-body">
+            <BarList rows={methodRows} emptyText="Nenhuma venda no período" />
+          </div>
+          <div className="card-foot">
+            <Info size={14} strokeWidth={1.75} className="mt-px shrink-0 text-faint" />
+            <span>Apenas vendas concluídas entram neste gráfico.</span>
+          </div>
+        </div>
+      </div>
+
+      <SectionTitle title="Estoque e vencimentos" />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <AttentionCard
+          icon={PackageX}
+          title="Vencidos"
+          count={expired.length}
+          tone="danger"
+          to="/vencimentos"
+          linkLabel="Ver vencimentos"
+          rows={expired.map(({ lot, product }) => ({
+            key: lot.id,
+            label: product!.name,
+            meta: `${num(lot.quantity)} un. · ${formatDate(lot.expiresAt)}`,
+            value: money(lot.quantity * product!.costPrice),
+            action: {
+              label: 'Descartar',
+              onClick: () => setDiscard({ lotId: lot.id, productId: product!.id, name: product!.name, quantity: lot.quantity, cost: product!.costPrice }),
+            },
+          }))}
+          empty="Nenhum lote vencido."
+        />
+        <AttentionCard
+          icon={CalendarClock}
+          title={`Vencendo em até ${settings.expiryWarningDays} dias`}
+          count={expiring.length}
+          tone="warn"
+          to="/vencimentos"
+          linkLabel="Ver vencimentos"
+          rows={expiring.map(({ lot, product }) => ({
+            key: lot.id,
+            label: product!.name,
+            meta: `${num(lot.quantity)} un. · ${formatDate(lot.expiresAt)}`,
+            value: money(lot.quantity * product!.costPrice),
+            action: {
+              label: 'Descartar',
+              onClick: () => setDiscard({ lotId: lot.id, productId: product!.id, name: product!.name, quantity: lot.quantity, cost: product!.costPrice }),
+            },
+          }))}
+          empty="Nada vencendo nos próximos dias."
+        />
+        <AttentionCard
+          icon={Package}
+          title="Estoque baixo"
+          count={low.length}
+          tone="warn"
+          to="/estoque"
+          linkLabel="Ver estoque"
+          rows={low.map((p) => ({
+            key: p.id,
+            label: p.name,
+            meta: `mínimo ${num(p.minStock)}`,
+            value: `${num(sellableStock(lots, p.id))} un.`,
+            action: {
+              label: 'Repor',
+              onClick: () => {
+                setRestock(p)
+                setRestockForm({ quantity: 0, expiresAt: addDays(todayStr(), 7) })
+              },
+            },
+          }))}
+          empty="Todos os produtos acima do mínimo."
+        />
+      </div>
+
+      <SectionTitle title="Últimas vendas">
+        <Link to="/vendas/historico" className="link">
+          Ver histórico <ChevronRight size={14} />
+        </Link>
+      </SectionTitle>
+      <div className="card table-wrap">
+        {recent.length === 0 ? (
+          <EmptyState compact icon={ShoppingBag} title="Nenhuma venda registrada" description="Abra o caixa e registre a primeira venda.">
+            <Button variant="primary" onClick={() => navigate('/vendas')}>
+              Nova venda
+            </Button>
+          </EmptyState>
+        ) : (
+          <table className="table hover">
+            <thead>
+              <tr>
+                <th>Nº</th>
+                <th>Data</th>
+                <th>Itens</th>
+                <th>Forma</th>
+                <th className="num">Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recent.map((s) => (
+                <tr key={s.id} className="cursor-pointer" onClick={() => navigate(`/vendas/${s.id}`)}>
+                  <td className="tabular text-muted">#{s.number}</td>
+                  <td className="tabular whitespace-nowrap">
+                    {formatDate(s.createdAt)} <span className="text-muted">{formatTime(s.createdAt)}</span>
+                  </td>
+                  <td>
+                    <span className="block max-w-[140px] truncate sm:max-w-[360px]">
+                      {plural(
+                        s.items.reduce((a, i) => a + i.quantity, 0),
+                        'item',
+                        'itens',
+                      )}
+                      <span className="text-muted"> · {s.items.map((i) => i.name).join(', ')}</span>
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap">{paymentDescription(s.payment)}</td>
+                  <td className="num font-semibold">{money(s.total)}</td>
+                  <td>{s.status === 'cancelada' ? <Badge tone="danger">Cancelada</Badge> : <Badge tone="ok">Concluída</Badge>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+
+      <ConfirmDialog
+        open={Boolean(discard)}
+        onClose={() => setDiscard(null)}
+        onConfirm={() => {
+          if (!discard) return
+          const r = removeStock({ productId: discard.productId, lotId: discard.lotId, quantity: discard.quantity, type: 'descarte', note: 'Descarte pelo painel' })
+          if (!r.ok) return notify(r.error, 'error')
+          notify(`Descartado: ${num(discard.quantity)} un. de ${discard.name} · perda de ${money(discard.quantity * discard.cost)}.`)
+        }}
+        title={discard ? `Descartar ${discard.name}?` : ''}
+        message={discard ? `Dá baixa em ${num(discard.quantity)} un. deste lote. Valor perdido: ${money(discard.quantity * discard.cost)}.` : undefined}
+        confirmLabel="Descartar"
+        danger
+      />
+
+      <Modal
+        open={Boolean(restock)}
+        onClose={() => setRestock(null)}
+        title="Repor estoque"
+        description={restock?.name}
+        size="sm"
+        footer={
+          <>
+            <Button onClick={() => setRestock(null)}>Cancelar</Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                if (!restock) return
+                const q = Math.floor(restockForm.quantity)
+                const r = addLot(restock.id, q, restockForm.expiresAt, 'Reposição pelo painel')
+                if (!r.ok) return notify(r.error, 'error')
+                notify(`Entrada registrada: ${num(q)} un. de ${restock.name}.`)
+                setRestock(null)
+              }}
+            >
+              Registrar entrada
+            </Button>
+          </>
+        }
+      >
+        <div className="grid grid-cols-2 gap-3 pb-2">
+          <Field label="Quantidade">
+            <NumberInput value={restockForm.quantity} onChange={(v) => setRestockForm({ ...restockForm, quantity: v })} autoFocus />
+          </Field>
+          <Field label="Validade do lote">
+            <Input type="date" value={restockForm.expiresAt} onChange={(e) => setRestockForm({ ...restockForm, expiresAt: e.target.value })} />
+          </Field>
+        </div>
+      </Modal>
+    </>
+  )
+}
+
+interface AttentionRow {
+  key: string
+  label: string
+  meta: string
+  value: string
+  action?: { label: string; onClick: () => void }
+}
+
+function AttentionCard({
+  icon: Icon,
+  title,
+  count,
+  tone,
+  to,
+  linkLabel,
+  rows,
+  empty,
+}: {
+  icon: typeof Package
+  title: string
+  count: number
+  tone: 'danger' | 'warn'
+  to: string
+  linkLabel: string
+  rows: AttentionRow[]
+  empty: string
+}) {
+  const shown = rows.slice(0, 3)
+  return (
+    <div className="card flex flex-col">
+      <div className="card-head">
+        <p className="card-title flex items-center gap-2">
+          <Icon size={16} strokeWidth={1.75} className={count > 0 ? (tone === 'danger' ? 'text-danger' : 'text-warn-text') : 'text-faint'} />
+          {title}
+        </p>
+        <span className={`count-pill ${count > 0 ? (tone === 'danger' ? 'border-danger/30 bg-danger-soft text-danger-text' : 'border-warn/40 bg-warn-soft text-warn-text') : ''}`}>{num(count)}</span>
+      </div>
+      {shown.length === 0 ? (
+        <p className="px-4 py-5 text-[13px] text-muted">{empty}</p>
+      ) : (
+        <ul className="divide-y divide-rule">
+          {shown.map((r) => (
+            <li key={r.key} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[13px]">
+              <span className="min-w-0">
+                <span className="block truncate font-medium">{r.label}</span>
+                <span className="block text-xs text-muted">{r.meta}</span>
+              </span>
+              <span className="flex shrink-0 items-center gap-2.5">
+                <span className="font-semibold tabular">{r.value}</span>
+                {r.action && (
+                  <Button size="sm" onClick={r.action.onClick}>
+                    {r.action.label}
+                  </Button>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-auto flex items-center justify-between border-t border-line px-4 py-2.5 text-xs text-muted">
+        <span>{rows.length > 3 ? `+ ${num(rows.length - 3)} mais` : ''}</span>
+        <Link to={to} className="link">
+          {linkLabel} <ChevronRight size={14} />
+        </Link>
+      </div>
+    </div>
+  )
+}
