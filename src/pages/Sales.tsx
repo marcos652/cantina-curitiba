@@ -146,24 +146,28 @@ export function Sales() {
         ) : (
           <ul className="divide-y divide-rule">
             {items.map(({ product, quantity }) => (
-              <li key={product.id} className="flex items-center gap-2 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{product.name}</p>
-                  <p className="text-xs text-muted tabular">{money(product.salePrice)} cada</p>
-                </div>
-                <div className="flex items-center rounded-md border border-line">
-                  <button type="button" onClick={() => dec(product.id)} aria-label="Diminuir" className="flex h-8 w-8 items-center justify-center text-muted hover:bg-raised hover:text-ink">
-                    <Minus size={14} strokeWidth={1.75} />
-                  </button>
-                  <span className="w-8 text-center text-sm font-medium tabular">{quantity}</span>
-                  <button type="button" onClick={() => add(product)} aria-label="Aumentar" className="flex h-8 w-8 items-center justify-center text-muted hover:bg-raised hover:text-ink">
-                    <Plus size={14} strokeWidth={1.75} />
+              <li key={product.id} className="py-3">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="min-w-0 text-sm font-medium leading-snug">{product.name}</p>
+                  <button type="button" onClick={() => remove(product.id)} aria-label="Remover" className="-mr-1 -mt-0.5 shrink-0 rounded p-1 text-faint hover:bg-raised hover:text-danger-text">
+                    <X size={14} strokeWidth={1.75} />
                   </button>
                 </div>
-                <span className="w-20 text-right text-sm font-semibold tabular">{money(product.salePrice * quantity)}</span>
-                <button type="button" onClick={() => remove(product.id)} aria-label="Remover" className="-mr-1 rounded p-1 text-faint hover:bg-raised hover:text-danger">
-                  <X size={14} strokeWidth={1.75} />
-                </button>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center rounded-md border border-control bg-white">
+                    <button type="button" onClick={() => dec(product.id)} aria-label="Diminuir" className="flex h-8 w-8 items-center justify-center text-accent hover:bg-accent-soft">
+                      <Minus size={14} strokeWidth={2} />
+                    </button>
+                    <span className="w-9 text-center text-sm font-semibold tabular">{quantity}</span>
+                    <button type="button" onClick={() => add(product)} aria-label="Aumentar" className="flex h-8 w-8 items-center justify-center text-accent hover:bg-accent-soft">
+                      <Plus size={14} strokeWidth={2} />
+                    </button>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold tabular">{money(product.salePrice * quantity)}</p>
+                    <p className="text-xs text-muted tabular">{money(product.salePrice)} cada</p>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
@@ -186,12 +190,12 @@ export function Sales() {
                   type="button"
                   onClick={() => setMethod(m)}
                   className={cx(
-                    'flex h-10 items-center gap-2 rounded-md border px-3 text-[13px] transition-colors',
-                    i === PAYMENT_METHODS.length - 1 && 'col-span-2',
-                    active ? 'border-accent bg-accent-soft font-medium text-accent' : 'border-line text-muted hover:border-control hover:text-ink',
+                    'flex items-center justify-center rounded-md border px-2 py-2 text-center text-[13px] leading-tight transition-colors',
+                    i === PAYMENT_METHODS.length - 1 ? 'col-span-2 min-h-[48px] flex-row gap-2' : 'min-h-[64px] flex-col gap-1.5',
+                    active ? 'border-accent bg-accent-soft font-semibold text-accent' : 'border-line text-ink hover:border-accent hover:bg-accent-soft/40',
                   )}
                 >
-                  <Icon size={16} strokeWidth={1.75} className={active ? 'text-accent' : 'text-faint'} />
+                  <Icon size={20} strokeWidth={1.75} className="shrink-0 text-accent" />
                   {PAYMENT_LABELS[m]}
                 </button>
               )
@@ -289,7 +293,7 @@ export function Sales() {
           <EmptyState title="Nenhum produto cadastrado" description="Cadastre produtos no estoque para começar a vender." />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px]">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_320px] lg:grid-cols-[1fr_360px] xl:grid-cols-[1fr_400px]">
           <div className="card">
             <div className="card-head">
               <p className="card-title flex items-center gap-2">
