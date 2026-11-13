@@ -12,7 +12,7 @@ Projeto: `cantina-5a4c5`. Passos, uma única vez, no [console do Firebase](https
 2. **Authentication → Usuários**: adicione o e-mail e a senha de quem vai usar o sistema (um usuário por cantina).
 3. **Firestore Database**: crie o banco, se ainda não existir.
 4. **Firestore → Regras**: cole o conteúdo de `firestore.rules` e publique. Ou, com o Firebase CLI: `firebase deploy --only firestore:rules`.
-5. **Authentication → Configurações → Domínios autorizados**: adicione `marcos652.github.io` para o site publicado no GitHub Pages (o `localhost` já vem liberado).
+5. **Authentication → Configurações → Domínios autorizados**: adicione o endereço do site na Vercel (o `localhost` já vem liberado).
 
 Cada usuário só enxerga os próprios dados (`lojas/{uid}/...`), então várias cantinas podem usar o mesmo projeto sem se misturar.
 
@@ -36,11 +36,12 @@ npm run build
 npm run preview
 ```
 
-## Publicando no GitHub Pages
+## Publicando na Vercel
 
-O repositório já inclui um workflow em `.github/workflows/deploy.yml` que faz o build e publica a pasta `dist` a cada push na branch `main`.
-
-Para ativar, uma única vez: no GitHub, abra **Settings → Pages** e em **Build and deployment → Source** escolha **GitHub Actions**. O site ficará em `https://<usuario>.github.io/cantina-curitiba/`.
+1. Em [vercel.com/new](https://vercel.com/new), importe o repositório `marcos652/cantina-curitiba`.
+2. A Vercel reconhece o projeto (Vite). Confirme: comando `npm run build`, pasta de saída `dist`. Não há variáveis de ambiente.
+3. Clique em **Deploy**. A cada envio para a branch `main`, o site é publicado de novo sozinho.
+4. Depois do primeiro deploy, copie o endereço (algo como `cantina-curitiba.vercel.app`) e adicione em **Firebase, Authentication, Configurações, Domínios autorizados**. Sem isso o login não funciona no site publicado.
 
 ## Funcionalidades
 
