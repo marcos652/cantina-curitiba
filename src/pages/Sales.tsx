@@ -41,6 +41,7 @@ export function Sales() {
   const [installments, setInstallments] = useState(2)
   const [received, setReceived] = useState(0)
   const [nsu, setNsu] = useState('')
+  const [nsuOpen, setNsuOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
   const [openCash, setOpenCash] = useState(false)
 
@@ -109,6 +110,7 @@ export function Sales() {
     setCart({})
     setReceived(0)
     setNsu('')
+    setNsuOpen(false)
   }
 
   function finalize() {
@@ -223,13 +225,36 @@ export function Sales() {
           </div>
         )}
 
-        {method !== 'dinheiro' && (
-          <div className="mt-3">
-            <Field label="NSU da venda" hint="Opcional. Número que aparece no comprovante da maquininha ou do Pix.">
-              <Input value={nsu} onChange={(e) => setNsu(e.target.value.replace(/\s+/g, ''))} inputMode="numeric" placeholder="Ex.: 123456" maxLength={20} />
-            </Field>
-          </div>
-        )}
+        {method !== 'dinheiro' &&
+          (nsuOpen || nsu ? (
+            <div className="mt-3 flex items-center gap-2">
+              <span className="shrink-0 text-[13px] text-muted">NSU</span>
+              <Input
+                value={nsu}
+                onChange={(e) => setNsu(e.target.value.replace(/\s+/g, ''))}
+                inputMode="numeric"
+                placeholder="Opcional"
+                maxLength={20}
+                className="h-8"
+                autoFocus={nsuOpen && !nsu}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setNsu('')
+                  setNsuOpen(false)
+                }}
+                aria-label="Remover NSU"
+                className="shrink-0 rounded p-1 text-faint hover:bg-raised hover:text-ink"
+              >
+                <X size={14} strokeWidth={1.75} />
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setNsuOpen(true)} className="link mt-3">
+              <Plus size={13} strokeWidth={2} /> Adicionar NSU <span className="font-normal text-faint">(opcional)</span>
+            </button>
+          ))}
 
         {method === 'dinheiro' && (
           <div className="mt-3 rounded-md bg-raised p-3">
