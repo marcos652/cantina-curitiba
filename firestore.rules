@@ -1,10 +1,43 @@
 rules_version = '2';
 
-// Cada usuário (cada cantina) só lê e grava os próprios dados, em lojas/{uid}/...
+// Uma loja = uma pasta lojas/{lojaId}. O lojaId é o uid do dono da cantina.
+// O dono e os funcionários cadastrados por ele leem e gravam os dados.
+// Só o dono gerencia a equipe (lojas/{lojaId}/membros).
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /lojas/{uid}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(lojaId) {
+      return signedIn() && request.auth.uid == lojaId;
+    }
+
+    function isMember(lojaId) {
+      return isOwner(lojaId) ||
+        (signedIn() && exists(/databases/$(database)/documents/lojas/$(lojaId)/membros/$(request.auth.uid)));
+    }
+
+    // Dados da cantina (cada coleção listada de propósito, para a equipe não alcançar "membros").
+    match /lojas/{lojaId}/products/{id} { allow read, write: if isMember(lojaId); }
+    match /lojas/{lojaId}/lots/{id} { allow read, write: if isMember(lojaId); }
+    match /lojas/{lojaId}/movements/{id} { allow read, write: if isMember(lojaId); }
+    match /lojas/{lojaId}/sales/{id} { allow read, write: if isMember(lojaId); }
+    match /lojas/{lojaId}/cashSessions/{id} { allow read, write: if isMember(lojaId); }
+    match /lojas/{lojaId}/config/{id} { allow read, write: if isMember(lojaId); }
+
+    // Equipe: todos da loja veem, só o dono altera.
+    match /lojas/{lojaId}/membros/{uid} {
+      allow read: if isMember(lojaId);
+      allow write: if isOwner(lojaId);
+    }
+
+    // Vínculo de cada pessoa com a loja onde trabalha.
+    match /usuarios/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.resource.data.lojaId == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.lojaId == request.auth.uid;
     }
   }
 }

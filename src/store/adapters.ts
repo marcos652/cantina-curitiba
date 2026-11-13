@@ -5,22 +5,22 @@ import { COLLS, type Adapter, type CollKey, type Op, type RemoteData } from './s
 type Item = { id: string } & Record<string, unknown>
 
 /**
- * Estrutura no Firestore, isolada por usuário (uid):
- *   lojas/{uid}/products | lots | movements | sales | cashSessions   (um documento por registro)
- *   lojas/{uid}/config/settings   (nome, taxas, categorias e a logo em base64)
- *   lojas/{uid}/config/counters   (próximo número de venda)
+ * Estrutura no Firestore, uma pasta por loja (o id da loja é o uid do dono):
+ *   lojas/{lojaId}/products | lots | movements | sales | cashSessions   (um documento por registro)
+ *   lojas/{lojaId}/config/settings   (nome, taxas, categorias e a logo em base64)
+ *   lojas/{lojaId}/config/counters   (próximo número de venda)
  */
 export class FirestoreAdapter implements Adapter {
   constructor(
     private db: Firestore,
-    private uid: string,
+    private lojaId: string,
   ) {}
 
   private col(key: CollKey) {
-    return collection(this.db, 'lojas', this.uid, key)
+    return collection(this.db, 'lojas', this.lojaId, key)
   }
   private cfg(id: 'settings' | 'counters') {
-    return doc(this.db, 'lojas', this.uid, 'config', id)
+    return doc(this.db, 'lojas', this.lojaId, 'config', id)
   }
 
   async loadAll(): Promise<RemoteData> {

@@ -9,12 +9,12 @@ Os dados ficam salvos no **Firebase (Firestore)**, em uma conta protegida por lo
 Projeto: `cantina-5a4c5`. Passos, uma única vez, no [console do Firebase](https://console.firebase.google.com/):
 
 1. **Authentication**: clique em *Começar* e ative o provedor **E-mail/senha**.
-2. **Authentication → Usuários**: adicione o e-mail e a senha de quem vai usar o sistema (um usuário por cantina).
+2. **Cadastro:** o primeiro acesso é feito na aba **Cadastrar** da tela de entrada, e quem cadastra vira o **dono** da cantina. Os funcionários são criados pelo dono dentro do sistema, em **Usuários**.
 3. **Firestore Database**: crie o banco, se ainda não existir.
 4. **Firestore → Regras**: cole o conteúdo de `firestore.rules` e publique. Ou, com o Firebase CLI: `firebase deploy --only firestore:rules`.
 5. **Authentication → Configurações → Domínios autorizados**: adicione o endereço do site na Vercel (o `localhost` já vem liberado).
 
-Cada usuário só enxerga os próprios dados (`lojas/{uid}/...`), então várias cantinas podem usar o mesmo projeto sem se misturar.
+Os dados ficam em `lojas/{id da loja}/...`, e o id da loja é o do dono. O dono e os funcionários que ele cadastra veem os mesmos dados. Cantinas diferentes não se misturam. Sempre que o arquivo `firestore.rules` mudar, publique as regras de novo.
 
 Para testar sem login e sem gravar nada, abra o sistema com `?backend=memory` no endereço (acrescente `&demo=1` para carregar dados de exemplo).
 

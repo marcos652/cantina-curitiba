@@ -85,7 +85,7 @@ export async function boot() {
   if (booted) return
   booted = true
   if (MEMORY) {
-    setSession({ memory: true, user: { uid: 'demo', email: 'Modo demonstração' } })
+    setSession({ memory: true, lojaId: 'demo', role: 'dono', user: { uid: 'demo', email: 'Modo demonstração' } })
     await load(async () => memoryDb)
     if (params.get('demo') === '1' && useStore.getState().products.length === 0) useStore.getState().loadDemoData()
     return
@@ -99,7 +99,24 @@ export async function boot() {
       return
     }
     setSession({ user: { uid: u.uid, email: u.email ?? '' } })
-    void load(async () => new FirestoreAdapter(db, u.uid))
+    void load(async () => {
+      // Funcionários têm um registro apontando para a loja do dono; quem não tem é o dono da própria loja.
+      let lojaId = u.uid
+      let role: 'dono' | 'funcionario' = 'dono'
+      const { doc, getDoc } = await import('firebase/firestore')
+      // Se a leitura do vínculo falhar (regras antigas), segue como dono da própria loja.
+      const me = await getDoc(doc(db, 'usuarios', u.uid)).catch(() => null)
+      if (me?.exists() && me.data().lojaId && me.data().lojaId !== u.uid) {
+        // Só vale se o dono da loja ainda mantém esta pessoa na equipe.
+        const member = await getDoc(doc(db, 'lojas', String(me.data().lojaId), 'membros', u.uid))
+        if (member.exists()) {
+          lojaId = String(me.data().lojaId)
+          role = 'funcionario'
+        }
+      }
+      setSession({ lojaId, role })
+      return new FirestoreAdapter(db, lojaId)
+    })
   })
 }
 

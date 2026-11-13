@@ -15,6 +15,7 @@ import { Reports } from '@/pages/Reports'
 import { SettingsPage } from '@/pages/Settings'
 import { Statement } from '@/pages/Statement'
 import { SaleDetail } from '@/pages/SaleDetail'
+import { Users } from '@/pages/Users'
 
 export function App() {
   const storeName = useStore((s) => s.settings.storeName)
@@ -38,6 +39,7 @@ export function App() {
           <Route path="/caixa" element={<Cash />} />
           <Route path="/extrato" element={<Statement />} />
           <Route path="/relatorios" element={<Reports />} />
+          <Route path="/usuarios" element={<Users />} />
           <Route path="/configuracoes" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

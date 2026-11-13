@@ -9,6 +9,9 @@ interface Session {
   sync: SyncState
   errorMessage: string
   memory: boolean
+  /** Pasta de dados da loja no banco. É o uid do dono; os funcionários usam a mesma. */
+  lojaId: string
+  role: 'dono' | 'funcionario'
 }
 
 /** Estado de acesso e de sincronização. Fica separado dos dados da cantina de propósito. */
@@ -18,6 +21,8 @@ export const useSession = create<Session>(() => ({
   sync: 'ok',
   errorMessage: '',
   memory: false,
+  lojaId: '',
+  role: 'dono',
 }))
 
 export const setSession = (patch: Partial<Session>) => useSession.setState(patch)
