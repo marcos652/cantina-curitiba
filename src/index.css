@@ -120,7 +120,7 @@
 
   /* Controle segmentado: Hoje | Ontem | 7 dias | 30 dias */
   .seg {
-    @apply inline-flex flex-wrap gap-0.5 rounded-md border border-line bg-raised p-0.5;
+    @apply inline-flex max-w-full gap-0.5 overflow-x-auto rounded-md border border-line bg-raised p-0.5;
   }
   .seg-item {
     @apply h-8 whitespace-nowrap rounded px-3 text-[13px] text-muted transition-colors hover:text-ink;

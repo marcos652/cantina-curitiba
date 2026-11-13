@@ -133,34 +133,35 @@ export function Home() {
       )}
 
       <div className="card mb-5">
-        <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5">
           <div>
             <p className="text-[15px] font-semibold">Visão geral</p>
-            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[13px] text-muted">
-              <span>{periodLabel(from, to)}</span>
-              <span className="text-faint">·</span>
-              {session ? (
-                <Link to="/caixa" className="hover:text-ink">
-                  Caixa aberto às {formatTime(session.openedAt)} · <span className="font-medium text-ink tabular">{money(cash ?? 0)}</span> na gaveta
-                </Link>
-              ) : (
-                <Link to="/caixa" className="link">
-                  Caixa fechado · Abrir caixa
-                </Link>
-              )}
-            </p>
+            <p className="mt-0.5 text-[13px] text-muted">{periodLabel(from, to)}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <DateRange
-              from={from}
-              to={to}
-              onChange={(f, t) => {
-                setPreset('custom')
-                setRange([f, t])
-              }}
-            />
-            <Chips value={preset} onChange={applyPreset} options={PRESET_OPTIONS} />
-          </div>
+          {session ? (
+            <Link to="/caixa" className="flex items-center gap-2 rounded-md border border-ok/30 bg-ok-soft px-3 py-1.5 text-[13px] text-ok-text">
+              <span className="h-2 w-2 rounded-full bg-ok" />
+              <span>
+                Caixa aberto às {formatTime(session.openedAt)} · <span className="font-semibold tabular">{money(cash ?? 0)}</span> na gaveta
+              </span>
+            </Link>
+          ) : (
+            <Link to="/caixa" className="flex items-center gap-2 rounded-md border border-line bg-raised px-3 py-1.5 text-[13px] text-muted hover:text-ink">
+              <span className="h-2 w-2 rounded-full bg-faint" />
+              Caixa fechado · <span className="font-medium text-accent">Abrir caixa</span>
+            </Link>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-raised px-4 py-3">
+          <DateRange
+            from={from}
+            to={to}
+            onChange={(f, t) => {
+              setPreset('custom')
+              setRange([f, t])
+            }}
+          />
+          <Chips value={preset} onChange={applyPreset} options={PRESET_OPTIONS} className="bg-white" />
         </div>
       </div>
 
