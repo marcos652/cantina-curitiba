@@ -1,6 +1,6 @@
 import type { Sale } from '@/types'
 import type { BarDatum } from '@/components/charts/StackedBars'
-import { addDays, startOfMonthStr, todayStr } from './dates'
+import { addDays, parseDateStr, startOfMonthStr, todayStr } from './dates'
 import { formatDate, formatTime } from './format'
 import { round2 } from './payments'
 
@@ -87,4 +87,17 @@ export function cumulativePoints(completed: Sale[], singleDay: boolean): { label
     return { label: singleDay ? formatTime(s.createdAt) : shortDay(dayOf(s)), value: acc }
   })
   return [{ label: 'Início', value: 0 }, ...steps, { label: singleDay ? 'Agora' : steps[steps.length - 1].label, value: acc }]
+}
+
+/** Período de comparação: o dia anterior (até a mesma hora, se for hoje) ou o intervalo anterior do mesmo tamanho. */
+export function previousPeriod(from: string, to: string): { from: string; to: string; label: string; untilNow?: boolean } {
+  const today = todayStr()
+  if (from === to) {
+    const prev = addDays(from, -1)
+    return from === today
+      ? { from: prev, to: prev, label: 'ontem até esta hora', untilNow: true }
+      : { from: prev, to: prev, label: 'o dia anterior' }
+  }
+  const days = Math.round((parseDateStr(to).getTime() - parseDateStr(from).getTime()) / 86400000) + 1
+  return { from: addDays(from, -days), to: addDays(from, -1), label: `os ${days} dias anteriores` }
 }

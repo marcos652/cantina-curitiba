@@ -1,14 +1,17 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CalendarClock, ChevronRight, Coins, Info, Package, PackageX, Percent, Plus, Receipt, ShoppingBag, TrendingUp, TriangleAlert } from 'lucide-react'
-import type { Sale } from '@/types'
+import type { Product, Sale } from '@/types'
 import { useStore } from '@/store/useStore'
 import { expectedCash, lowStockProducts, openSession, salesBetween, sumCost, sumFees, sumTotal, totalsByMethod } from '@/store/selectors'
 import { isoInRange } from '@/lib/dates'
 import { formatTime, formatDate, money, num, pct, plural } from '@/lib/format'
 import { PAYMENT_ICONS, PAYMENT_LABELS, PAYMENT_SHORT, paymentDescription, round2 } from '@/lib/payments'
 import { lotStatus, sellableStock } from '@/lib/stock'
-import { PRESET_OPTIONS, cumulativePoints, periodLabel, presetRange, salesBuckets, type Preset } from '@/lib/periods'
+import { PRESET_OPTIONS, cumulativePoints, periodLabel, presetRange, previousPeriod, salesBuckets, type Preset } from '@/lib/periods'
+import { addDays, todayStr } from '@/lib/dates'
+import { Field, Input, NumberInput } from '@/components/ui/Field'
+import { ConfirmDialog, Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { PageHeader, SectionTitle } from '@/components/ui/PageHeader'
 import { Kpi, KpiStrip } from '@/components/ui/Stat'
@@ -35,6 +38,11 @@ export function Home() {
   const settings = useStore((s) => s.settings)
   const loadDemo = useStore((s) => s.loadDemoData)
   const notify = useStore((s) => s.notify)
+  const removeStock = useStore((s) => s.removeStock)
+  const addLot = useStore((s) => s.addLot)
+  const [discard, setDiscard] = useState<{ lotId: string; productId: string; name: string; quantity: number; cost: number } | null>(null)
+  const [restock, setRestock] = useState<Product | null>(null)
+  const [restockForm, setRestockForm] = useState({ quantity: 0, expiresAt: addDays(todayStr(), 7) })
 
   const [preset, setPreset] = useState<Preset>('hoje')
   const [[from, to], setRange] = useState<[string, string]>(() => presetRange('hoje'))
@@ -49,6 +57,20 @@ export function Home() {
   const canceled = useMemo(() => sales.filter((s) => s.status === 'cancelada' && isoInRange(s.createdAt, from, to)), [sales, from, to])
   const revenue = sumTotal(list)
   const count = list.length
+  const prev = useMemo(() => {
+    const p = previousPeriod(from, to)
+    let prevList = salesBetween(sales, p.from, p.to)
+    if (p.untilNow) {
+      const now = new Date()
+      const limit = now.getHours() * 60 + now.getMinutes()
+      prevList = prevList.filter((s) => {
+        const d = new Date(s.createdAt)
+        return d.getHours() * 60 + d.getMinutes() <= limit
+      })
+    }
+    return { label: p.label, revenue: sumTotal(prevList) }
+  }, [sales, from, to])
+  const diff = round2(revenue - prev.revenue)
   const ticket = count ? round2(revenue / count) : 0
   const fees = sumFees(list)
   const cost = sumCost(list)
@@ -174,6 +196,20 @@ export function Home() {
                 <span className="text-[30px] font-bold leading-none tracking-tight tabular">{money(revenue)}</span>
                 <span className="text-[13px] text-muted tabular">{plural(count, 'venda', 'vendas')}</span>
               </p>
+              <p className="mt-2 text-xs text-muted tabular">
+                {prev.revenue === 0 && revenue === 0 ? (
+                  <>Sem vendas, nem em {prev.label}</>
+                ) : diff === 0 ? (
+                  <>Igual a {prev.label}</>
+                ) : (
+                  <>
+                    <span className={`font-semibold ${diff > 0 ? 'text-ok-text' : 'text-danger-text'}`}>
+                      {diff > 0 ? '+' : '−'} {money(Math.abs(diff))}
+                    </span>{' '}
+                    em relação a {prev.label} ({money(prev.revenue)})
+                  </>
+                )}
+              </p>
             </div>
             <Button size="sm" onClick={() => navigate('/vendas/historico')}>
               Detalhar <ChevronRight size={14} strokeWidth={1.75} />
@@ -274,6 +310,10 @@ export function Home() {
             label: product!.name,
             meta: `${num(lot.quantity)} un. · ${formatDate(lot.expiresAt)}`,
             value: money(lot.quantity * product!.costPrice),
+            action: {
+              label: 'Descartar',
+              onClick: () => setDiscard({ lotId: lot.id, productId: product!.id, name: product!.name, quantity: lot.quantity, cost: product!.costPrice }),
+            },
           }))}
           empty="Nenhum lote vencido."
         />
@@ -289,6 +329,10 @@ export function Home() {
             label: product!.name,
             meta: `${num(lot.quantity)} un. · ${formatDate(lot.expiresAt)}`,
             value: money(lot.quantity * product!.costPrice),
+            action: {
+              label: 'Descartar',
+              onClick: () => setDiscard({ lotId: lot.id, productId: product!.id, name: product!.name, quantity: lot.quantity, cost: product!.costPrice }),
+            },
           }))}
           empty="Nada vencendo nos próximos dias."
         />
@@ -304,6 +348,13 @@ export function Home() {
             label: p.name,
             meta: `mínimo ${num(p.minStock)}`,
             value: `${num(sellableStock(lots, p.id))} un.`,
+            action: {
+              label: 'Repor',
+              onClick: () => {
+                setRestock(p)
+                setRestockForm({ quantity: 0, expiresAt: addDays(todayStr(), 7) })
+              },
+            },
           }))}
           empty="Todos os produtos acima do mínimo."
         />
@@ -361,6 +412,56 @@ export function Home() {
       </div>
 
       <SaleDetailsModal sale={detail} onClose={() => setDetail(null)} />
+
+      <ConfirmDialog
+        open={Boolean(discard)}
+        onClose={() => setDiscard(null)}
+        onConfirm={() => {
+          if (!discard) return
+          const r = removeStock({ productId: discard.productId, lotId: discard.lotId, quantity: discard.quantity, type: 'descarte', note: 'Descarte pelo painel' })
+          if (!r.ok) return notify(r.error, 'error')
+          notify(`Descartado: ${num(discard.quantity)} un. de ${discard.name} · perda de ${money(discard.quantity * discard.cost)}.`)
+        }}
+        title={discard ? `Descartar ${discard.name}?` : ''}
+        message={discard ? `Dá baixa em ${num(discard.quantity)} un. deste lote. Valor perdido: ${money(discard.quantity * discard.cost)}.` : undefined}
+        confirmLabel="Descartar"
+        danger
+      />
+
+      <Modal
+        open={Boolean(restock)}
+        onClose={() => setRestock(null)}
+        title="Repor estoque"
+        description={restock?.name}
+        size="sm"
+        footer={
+          <>
+            <Button onClick={() => setRestock(null)}>Cancelar</Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                if (!restock) return
+                const q = Math.floor(restockForm.quantity)
+                const r = addLot(restock.id, q, restockForm.expiresAt, 'Reposição pelo painel')
+                if (!r.ok) return notify(r.error, 'error')
+                notify(`Entrada registrada: ${num(q)} un. de ${restock.name}.`)
+                setRestock(null)
+              }}
+            >
+              Registrar entrada
+            </Button>
+          </>
+        }
+      >
+        <div className="grid grid-cols-2 gap-3 pb-2">
+          <Field label="Quantidade">
+            <NumberInput value={restockForm.quantity} onChange={(v) => setRestockForm({ ...restockForm, quantity: v })} autoFocus />
+          </Field>
+          <Field label="Validade do lote">
+            <Input type="date" value={restockForm.expiresAt} onChange={(e) => setRestockForm({ ...restockForm, expiresAt: e.target.value })} />
+          </Field>
+        </div>
+      </Modal>
     </>
   )
 }
@@ -370,6 +471,7 @@ interface AttentionRow {
   label: string
   meta: string
   value: string
+  action?: { label: string; onClick: () => void }
 }
 
 function AttentionCard({
@@ -411,7 +513,14 @@ function AttentionCard({
                 <span className="block truncate font-medium">{r.label}</span>
                 <span className="block text-xs text-muted">{r.meta}</span>
               </span>
-              <span className="shrink-0 font-semibold tabular">{r.value}</span>
+              <span className="flex shrink-0 items-center gap-2.5">
+                <span className="font-semibold tabular">{r.value}</span>
+                {r.action && (
+                  <Button size="sm" onClick={r.action.onClick}>
+                    {r.action.label}
+                  </Button>
+                )}
+              </span>
             </li>
           ))}
         </ul>
