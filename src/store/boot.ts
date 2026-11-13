@@ -38,11 +38,15 @@ export function authMessage(e: unknown): string {
   if (code === 'auth/configuration-not-found') return 'O login ainda não foi ativado no Firebase deste projeto (Authentication, Começar, e-mail e senha).'
   if (code === 'auth/operation-not-allowed') return 'O login por e-mail e senha não está ativado no Firebase deste projeto.'
   if (code === 'auth/unauthorized-domain') return 'Este endereço não está autorizado no Firebase (Authentication, Domínios autorizados).'
+  if (code === 'auth/email-already-in-use') return 'Já existe uma conta com esse e-mail. Use a aba Entrar.'
+  if (code === 'auth/weak-password') return 'A senha precisa ter pelo menos 6 caracteres.'
   if (code === 'auth/user-disabled') return 'Este usuário está desativado.'
   return 'Não foi possível entrar. Tente de novo.'
 }
 
 let retryWith: (() => Promise<void>) | null = null
+/** Nome da cantina digitado no cadastro: vira o nome da loja assim que a conta nova abrir. */
+let pendingStoreName: string | null = null
 
 async function load(makeAdapter: () => Promise<Adapter>) {
   retryWith = () => load(makeAdapter)
@@ -58,6 +62,11 @@ async function load(makeAdapter: () => Promise<Adapter>) {
       } catch {
         /* sem acesso ao armazenamento local: segue em frente */
       }
+    }
+    if (pendingStoreName) {
+      const st = useStore.getState()
+      if (st.products.length === 0 && st.sales.length === 0) st.updateSettings({ storeName: pendingStoreName })
+      pendingStoreName = null
     }
     setSession({ phase: 'ready' })
   } catch (e) {
@@ -97,6 +106,17 @@ export async function boot() {
 export async function login(email: string, password: string) {
   const [{ auth }, { signInWithEmailAndPassword }] = await Promise.all([import('@/lib/firebase'), import('firebase/auth')])
   await signInWithEmailAndPassword(auth, email.trim(), password)
+}
+
+export async function signup(storeName: string, email: string, password: string) {
+  const [{ auth }, { createUserWithEmailAndPassword }] = await Promise.all([import('@/lib/firebase'), import('firebase/auth')])
+  pendingStoreName = storeName.trim() || null
+  try {
+    await createUserWithEmailAndPassword(auth, email.trim(), password)
+  } catch (e) {
+    pendingStoreName = null
+    throw e
+  }
 }
 
 export async function sendReset(email: string) {
