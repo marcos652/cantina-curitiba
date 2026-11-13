@@ -39,6 +39,7 @@ export function SaleDetailsModal({ sale, onClose }: { sale: Sale | null; onClose
 
       <dl className="mt-4 space-y-1.5 text-sm">
         <Row label="Total" value={money(sale.total)} strong />
+        {p.nsu && <Row label="NSU" value={p.nsu} />}
         {p.method === 'credito_parcelado' && p.installments && (
           <Row label="Parcelas" value={`${p.installments}x de ${money(installmentValue(sale.total, p.installments))}`} />
         )}

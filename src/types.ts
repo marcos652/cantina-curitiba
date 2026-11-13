@@ -54,6 +54,8 @@ export interface SaleItem {
 export interface SalePayment {
   method: PaymentMethod
   installments?: number
+  /** NSU (número sequencial único) da maquininha ou comprovante do Pix. */
+  nsu?: string
   received?: number
   change?: number
   feePercent: number

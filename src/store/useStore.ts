@@ -28,6 +28,7 @@ export interface SaleInput {
   items: { productId: string; quantity: number }[]
   method: PaymentMethod
   installments?: number
+  nsu?: string
   received?: number
 }
 
@@ -220,6 +221,9 @@ export const useStore = create<Store>()(
         const feePercent = s.settings.fees[input.method] ?? 0
         const { feeValue, net } = calcFee(total, feePercent)
         const payment: SalePayment = { method: input.method, feePercent, feeValue, net }
+
+        const nsu = input.nsu?.trim()
+        if (nsu && input.method !== 'dinheiro') payment.nsu = nsu
 
         if (input.method === 'credito_parcelado') {
           payment.installments = Math.min(12, Math.max(2, input.installments ?? 2))

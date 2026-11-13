@@ -40,6 +40,7 @@ export function Sales() {
   const [method, setMethod] = useState<PaymentMethod>('pix')
   const [installments, setInstallments] = useState(2)
   const [received, setReceived] = useState(0)
+  const [nsu, setNsu] = useState('')
   const [cartOpen, setCartOpen] = useState(false)
   const [openCash, setOpenCash] = useState(false)
 
@@ -107,6 +108,7 @@ export function Sales() {
   function clear() {
     setCart({})
     setReceived(0)
+    setNsu('')
   }
 
   function finalize() {
@@ -114,6 +116,7 @@ export function Sales() {
       items: items.map((i) => ({ productId: i.product.id, quantity: i.quantity })),
       method,
       installments,
+      nsu: method !== 'dinheiro' ? nsu : undefined,
       received: method === 'dinheiro' && received > 0 ? received : undefined,
     })
     if (!r.ok) return notify(r.error, 'error')
@@ -217,6 +220,14 @@ export function Sales() {
             <p className="pt-5 text-sm tabular">
               {installments}x de <span className="font-semibold">{money(installmentValue(total, installments))}</span>
             </p>
+          </div>
+        )}
+
+        {method !== 'dinheiro' && (
+          <div className="mt-3">
+            <Field label="NSU da venda" hint="Opcional. Número que aparece no comprovante da maquininha ou do Pix.">
+              <Input value={nsu} onChange={(e) => setNsu(e.target.value.replace(/\s+/g, ''))} inputMode="numeric" placeholder="Ex.: 123456" maxLength={20} />
+            </Field>
           </div>
         )}
 

@@ -9,7 +9,7 @@ import { PAYMENT_LABELS, PAYMENT_METHODS, paymentDescription } from '@/lib/payme
 import { PRESET_OPTIONS, presetRange, type Preset } from '@/lib/periods'
 import { downloadCSV } from '@/lib/download'
 import { Button } from '@/components/ui/Button'
-import { Field, Select } from '@/components/ui/Field'
+import { Field, Input, Select } from '@/components/ui/Field'
 import { DateRange } from '@/components/ui/DateRange'
 import { Chips, Tabs } from '@/components/ui/Tabs'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -29,6 +29,7 @@ export function SalesHistory() {
   const [[from, to], setRange] = useState<[string, string]>(() => presetRange('7'))
   const [method, setMethod] = useState<'todas' | PaymentMethod>('todas')
   const [status, setStatus] = useState<'todas' | 'concluida' | 'cancelada'>('todas')
+  const [nsuQuery, setNsuQuery] = useState('')
   const [detail, setDetail] = useState<Sale | null>(null)
   const [toCancel, setToCancel] = useState<Sale | null>(null)
 
@@ -44,21 +45,23 @@ export function SalesHistory() {
           (s) =>
             (!from || !to || isoInRange(s.createdAt, from, to)) &&
             (method === 'todas' || s.payment.method === method) &&
-            (status === 'todas' || s.status === status),
+            (status === 'todas' || s.status === status) &&
+            (!nsuQuery.trim() || (s.payment.nsu ?? '').includes(nsuQuery.trim())),
         )
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [sales, from, to, method, status],
+    [sales, from, to, method, status, nsuQuery],
   )
   const completedList = list.filter((s) => s.status === 'concluida')
 
   function exportCSV() {
     downloadCSV(`vendas_${from}_${to}.csv`, [
-      ['Nº', 'Data', 'Itens', 'Forma', 'Total', 'Taxa', 'Líquido', 'Status'],
+      ['Nº', 'Data', 'Itens', 'Forma', 'NSU', 'Total', 'Taxa', 'Líquido', 'Status'],
       ...list.map((s) => [
         s.number,
         formatDateTime(s.createdAt),
         s.items.map((i) => `${i.quantity}x ${i.name}`).join(', '),
         paymentDescription(s.payment),
+        s.payment.nsu ?? '',
         s.total,
         s.payment.feeValue,
         s.payment.net,
@@ -106,6 +109,9 @@ export function SalesHistory() {
                 ))}
               </Select>
             </Field>
+            <Field label="NSU" className="w-36">
+              <Input value={nsuQuery} onChange={(e) => setNsuQuery(e.target.value)} placeholder="Buscar NSU" inputMode="numeric" />
+            </Field>
             <Field label="Status" className="w-36">
               <Select value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
                 <option value="todas">Todas</option>
@@ -141,6 +147,7 @@ export function SalesHistory() {
                   <th>Data</th>
                   <th>Itens</th>
                   <th>Forma</th>
+                  <th>NSU</th>
                   <th className="num">Total</th>
                   <th className="num">Líquido</th>
                   <th>Status</th>
@@ -154,6 +161,7 @@ export function SalesHistory() {
                     <td className="tabular whitespace-nowrap">{formatDateTime(s.createdAt)}</td>
                     <td className="max-w-[280px] truncate">{s.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}</td>
                     <td className="whitespace-nowrap">{paymentDescription(s.payment)}</td>
+                    <td className="tabular text-muted">{s.payment.nsu ?? '—'}</td>
                     <td className="num font-semibold">{money(s.total)}</td>
                     <td className="num text-muted">{money(s.payment.net)}</td>
                     <td>{s.status === 'concluida' ? <Badge tone="ok">Concluída</Badge> : <Badge tone="danger">Cancelada</Badge>}</td>
