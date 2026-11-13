@@ -167,7 +167,7 @@ export function Home() {
       <SectionTitle title="Informação sobre as vendas" />
       <div className="space-y-4">
         <div className="card grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-          <div className="flex items-start justify-between gap-3 p-5">
+          <div className="flex items-start justify-between gap-3 p-4">
             <div>
               <p className="kpi-label">
                 Faturamento total <Info size={14} strokeWidth={1.75} className="text-faint" />
@@ -193,12 +193,12 @@ export function Home() {
             <p className="card-title">Meios de pagamento</p>
             <span className="text-xs text-muted">Vendas concluídas no período</span>
           </div>
-          <div className="overflow-hidden"><div className="-mb-px -mr-px grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-px bg-line lg:grid-cols-5">
             {byMethod.map((m) => {
               const Icon = PAYMENT_ICONS[m.method]
               const share = revenue > 0 ? (m.gross / revenue) * 100 : 0
               return (
-                <div key={m.method} className="border-b border-r border-line px-5 py-4">
+                <div key={m.method} className="bg-white px-4 py-4 last:col-span-2 lg:last:col-span-1">
                   <p className="kpi-label">
                     <Icon size={15} strokeWidth={1.75} className="text-accent" />
                     <span className="truncate">{PAYMENT_SHORT[m.method]}</span>
@@ -220,7 +220,7 @@ export function Home() {
                 </div>
               )
             })}
-          </div></div>
+          </div>
         </div>
       </div>
 

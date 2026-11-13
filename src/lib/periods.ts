@@ -77,12 +77,14 @@ export function salesBuckets(completed: Sale[], canceled: Sale[], from: string, 
   return out
 }
 
-/** Acumulado venda a venda, para a linha dentro do cartão de faturamento. */
+/** Acumulado venda a venda. Começa em zero e termina no último valor, para a linha aparecer mesmo com uma só venda. */
 export function cumulativePoints(completed: Sale[], singleDay: boolean): { label: string; value: number }[] {
   const sorted = [...completed].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  if (sorted.length === 0) return []
   let acc = 0
-  return sorted.map((s) => {
+  const steps = sorted.map((s) => {
     acc = round2(acc + s.total)
     return { label: singleDay ? formatTime(s.createdAt) : shortDay(dayOf(s)), value: acc }
   })
+  return [{ label: 'Início', value: 0 }, ...steps, { label: singleDay ? 'Agora' : steps[steps.length - 1].label, value: acc }]
 }
