@@ -6,7 +6,7 @@ import { useStore } from '@/store/useStore'
 import { expectedCash, lowStockProducts, openSession, salesBetween, sumCost, sumFees, sumTotal, totalsByMethod } from '@/store/selectors'
 import { isoInRange } from '@/lib/dates'
 import { formatTime, formatDate, money, num, pct, plural } from '@/lib/format'
-import { PAYMENT_ICONS, PAYMENT_LABELS, paymentDescription, round2 } from '@/lib/payments'
+import { PAYMENT_ICONS, PAYMENT_LABELS, PAYMENT_SHORT, paymentDescription, round2 } from '@/lib/payments'
 import { lotStatus, sellableStock } from '@/lib/stock'
 import { PRESET_OPTIONS, cumulativePoints, periodLabel, presetRange, salesBuckets, type Preset } from '@/lib/periods'
 import { Button } from '@/components/ui/Button'
@@ -75,33 +75,6 @@ export function Home() {
   const low = lowStockProducts(products, lots)
   const recent = useMemo(() => [...sales].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 6), [sales])
 
-  if (products.length === 0) {
-    return (
-      <>
-        <PageHeader title="Início" />
-        <div className="card">
-          <EmptyState
-            icon={Package}
-            title="Comece cadastrando seus produtos"
-            description="Depois abra o caixa e registre a primeira venda. Se preferir, carregue dados de exemplo para conhecer o sistema."
-          >
-            <Button variant="primary" onClick={() => navigate('/estoque?novo=1')}>
-              <Plus size={16} strokeWidth={1.75} /> Cadastrar produto
-            </Button>
-            <Button
-              onClick={() => {
-                loadDemo()
-                notify('Dados de exemplo carregados.')
-              }}
-            >
-              Carregar dados de exemplo
-            </Button>
-          </EmptyState>
-        </div>
-      </>
-    )
-  }
-
   const alertText =
     expired.length > 0 || expiring.length > 0
       ? [
@@ -121,6 +94,31 @@ export function Home() {
           <Plus size={16} strokeWidth={1.75} /> Nova venda
         </Button>
       </PageHeader>
+
+      {products.length === 0 && (
+        <div className="notice mb-4 flex-wrap items-center justify-between">
+          <span className="flex items-center gap-2.5">
+            <Info size={16} strokeWidth={1.75} className="shrink-0 text-warn-text" />
+            <span>
+              <span className="font-medium">Seu sistema está vazio.</span> Cadastre produtos e abra o caixa para ver os números aqui.
+            </span>
+          </span>
+          <span className="flex flex-wrap gap-2">
+            <Button variant="primary" size="sm" onClick={() => navigate('/estoque?novo=1')}>
+              <Plus size={14} strokeWidth={1.75} /> Cadastrar produto
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                loadDemo()
+                notify('Dados de exemplo carregados.')
+              }}
+            >
+              Carregar dados de exemplo
+            </Button>
+          </span>
+        </div>
+      )}
 
       {alertText && (
         <div className="notice mb-4">
@@ -201,7 +199,7 @@ export function Home() {
                 <div key={m.method} className="bg-white px-4 py-3.5">
                   <p className="kpi-label">
                     <Icon size={15} strokeWidth={1.75} className="text-accent" />
-                    <span className="truncate">{PAYMENT_LABELS[m.method]}</span>
+                    <span className="truncate">{PAYMENT_SHORT[m.method]}</span>
                   </p>
                   <p className={`mt-1.5 text-[20px] font-bold leading-none tracking-tight tabular ${m.count === 0 ? 'text-faint' : ''}`}>{money(m.gross)}</p>
                   <p className="mt-1.5 text-xs text-muted tabular">
