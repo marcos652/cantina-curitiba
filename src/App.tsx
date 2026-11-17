@@ -7,6 +7,7 @@ import { useStore } from '@/store/useStore'
 import { Home } from '@/pages/Home'
 import { Sales } from '@/pages/Sales'
 import { SalesHistory } from '@/pages/SalesHistory'
+import { Fiados } from '@/pages/Fiados'
 import { Stock } from '@/pages/Stock'
 import { Movements } from '@/pages/Movements'
 import { Expirations } from '@/pages/Expirations'
@@ -32,6 +33,7 @@ export function App() {
           <Route path="/" element={<Home />} />
           <Route path="/vendas" element={<Sales />} />
           <Route path="/vendas/historico" element={<SalesHistory />} />
+          <Route path="/vendas/fiado" element={<Fiados />} />
           <Route path="/vendas/:id" element={<SaleDetail />} />
           <Route path="/estoque" element={<Stock />} />
           <Route path="/estoque/movimentacoes" element={<Movements />} />

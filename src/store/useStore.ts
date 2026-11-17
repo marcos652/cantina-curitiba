@@ -1,7 +1,7 @@
 import { create } from 'zustand'
-import type { AppData, Lot, PaymentMethod, Product, Sale, SaleItem, SalePayment, Settings, StockMovement } from '@/types'
+import type { AppData, Fiado, Lot, PaymentMethod, Product, Sale, SaleItem, SalePayment, Settings, StockMovement } from '@/types'
 import { uid } from '@/lib/ids'
-import { nowISO } from '@/lib/dates'
+import { nowISO, todayStr } from '@/lib/dates'
 import { calcFee, round2 } from '@/lib/payments'
 import { pickLotsFIFO, productLots } from '@/lib/stock'
 import { DEFAULT_SETTINGS, emptyData } from './defaults'
@@ -31,6 +31,14 @@ export interface SaleInput {
   received?: number
 }
 
+export interface FiadoInput {
+  name: string
+  takenAt: string
+  dueAt: string
+  amount: number
+  note?: string
+}
+
 export interface RemoveStockInput {
   productId: string
   lotId?: string
@@ -52,6 +60,11 @@ export interface Store extends AppData {
   createSale(input: SaleInput): Result<Sale>
   cancelSale(id: string): Result
 
+  addFiado(input: FiadoInput): Result
+  updateFiado(id: string, input: FiadoInput): Result
+  setFiadoPaid(id: string, paid: boolean): void
+  deleteFiado(id: string): void
+
   openCash(amount: number): Result
   addCashMovement(type: 'sangria' | 'reforco', amount: number, note?: string): Result
   closeCash(countedAmount: number, expectedAmount: number): Result
@@ -72,6 +85,15 @@ export interface Store extends AppData {
 const fail = (error: string): Result<never> => ({ ok: false, error })
 const done: Result = { ok: true, value: undefined }
 
+function validateFiado(input: FiadoInput): string | null {
+  if (!input.name.trim()) return 'Informe o nome do funcionário.'
+  if (!input.takenAt) return 'Informe a data em que foi pego.'
+  if (!input.dueAt) return 'Informe a data do pagamento.'
+  if (input.dueAt < input.takenAt) return 'A data do pagamento não pode ser antes da data em que foi pego.'
+  if (!(input.amount > 0)) return 'Informe um valor maior que zero.'
+  return null
+}
+
 function pickData(s: AppData): AppData {
   return {
     products: s.products,
@@ -79,6 +101,7 @@ function pickData(s: AppData): AppData {
     movements: s.movements,
     sales: s.sales,
     cashSessions: s.cashSessions,
+    fiados: s.fiados,
     settings: s.settings,
     nextSaleNumber: s.nextSaleNumber,
   }
@@ -297,6 +320,54 @@ export const useStore = create<Store>()((set, get) => ({
         return done
       },
 
+      // ---------- Fiado (funcionários que vão pagar depois) ----------
+      addFiado(input) {
+        const err = validateFiado(input)
+        if (err) return fail(err)
+        const fiado: Fiado = {
+          id: uid(),
+          name: input.name.trim(),
+          takenAt: input.takenAt,
+          dueAt: input.dueAt,
+          amount: round2(input.amount),
+          note: input.note?.trim() || undefined,
+          paid: false,
+          createdAt: nowISO(),
+        }
+        set((s) => ({ fiados: [...s.fiados, fiado] }))
+        return done
+      },
+
+      updateFiado(id, input) {
+        const err = validateFiado(input)
+        if (err) return fail(err)
+        set((s) => ({
+          fiados: s.fiados.map((f) =>
+            f.id === id
+              ? {
+                  ...f,
+                  name: input.name.trim(),
+                  takenAt: input.takenAt,
+                  dueAt: input.dueAt,
+                  amount: round2(input.amount),
+                  note: input.note?.trim() || undefined,
+                }
+              : f,
+          ),
+        }))
+        return done
+      },
+
+      setFiadoPaid(id, paid) {
+        set((s) => ({
+          fiados: s.fiados.map((f) => (f.id === id ? { ...f, paid, paidAt: paid ? todayStr() : undefined } : f)),
+        }))
+      },
+
+      deleteFiado(id) {
+        set((s) => ({ fiados: s.fiados.filter((f) => f.id !== id) }))
+      },
+
       // ---------- Caixa ----------
       openCash(amount) {
         const s = get()
@@ -370,6 +441,7 @@ export const useStore = create<Store>()((set, get) => ({
             movements: data.movements!,
             sales: data.sales!,
             cashSessions: data.cashSessions!,
+            fiados: Array.isArray(data.fiados) ? data.fiados : [],
             settings: {
               ...DEFAULT_SETTINGS,
               ...(data.settings ?? {}),

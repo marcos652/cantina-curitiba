@@ -54,6 +54,7 @@ const METHOD_WEIGHTS: Array<[PaymentMethod, number]> = [
   ['credito', 18],
   ['dinheiro', 17],
   ['credito_parcelado', 10],
+  ['voucher', 5],
 ]
 
 function at(dateStr: string, hour: number, minute: number): string {
@@ -262,6 +263,7 @@ export function buildDemoData(): AppData {
     movements,
     sales,
     cashSessions: sessions,
+    fiados: [],
     nextSaleNumber: saleNumber,
   }
 }

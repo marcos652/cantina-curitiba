@@ -19,6 +19,7 @@ import { OpenCashModal } from '@/components/OpenCashModal'
 export const SALES_TABS = [
   { to: '/vendas', label: 'Nova venda', end: true },
   { to: '/vendas/historico', label: 'Histórico' },
+  { to: '/vendas/fiado', label: 'Fiado' },
 ]
 
 const INSTALLMENTS = Array.from({ length: 11 }, (_, i) => i + 2)
@@ -186,7 +187,7 @@ export function Sales() {
         <div className="mt-4">
           <p className="mb-2 text-[13px] font-medium text-muted">Forma de pagamento</p>
           <div className="grid grid-cols-2 gap-2">
-            {PAYMENT_METHODS.map((m, i) => {
+            {PAYMENT_METHODS.map((m) => {
               const Icon = PAYMENT_ICONS[m]
               const active = method === m
               return (
@@ -195,8 +196,7 @@ export function Sales() {
                   type="button"
                   onClick={() => setMethod(m)}
                   className={cx(
-                    'flex items-center justify-center rounded-md border px-2 py-2 text-center text-[13px] leading-tight transition-colors',
-                    i === PAYMENT_METHODS.length - 1 ? 'col-span-2 min-h-[48px] flex-row gap-2' : 'min-h-[64px] flex-col gap-1.5',
+                    'flex min-h-[64px] flex-col items-center justify-center gap-1.5 rounded-md border px-2 py-2 text-center text-[13px] leading-tight transition-colors',
                     active ? 'border-accent bg-accent-soft font-semibold text-accent' : 'border-line text-ink hover:border-accent hover:bg-accent-soft/40',
                   )}
                 >

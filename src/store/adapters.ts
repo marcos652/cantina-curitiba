@@ -68,7 +68,7 @@ export class FirestoreAdapter implements Adapter {
 
 /** Banco falso, só em memória: usado em demonstração e em testes (?backend=memory). Não grava nada em lugar nenhum. */
 export class MemoryAdapter implements Adapter {
-  data: Record<CollKey, Map<string, Item>> = { products: new Map(), lots: new Map(), movements: new Map(), sales: new Map(), cashSessions: new Map() }
+  data: Record<CollKey, Map<string, Item>> = { products: new Map(), lots: new Map(), movements: new Map(), sales: new Map(), cashSessions: new Map(), fiados: new Map() }
   settings: Settings | null = null
   counters: { nextSaleNumber: number } | null = null
   commits = 0

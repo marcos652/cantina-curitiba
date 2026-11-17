@@ -1,4 +1,4 @@
-export type PaymentMethod = 'debito' | 'credito' | 'credito_parcelado' | 'dinheiro' | 'pix'
+export type PaymentMethod = 'debito' | 'credito' | 'credito_parcelado' | 'dinheiro' | 'pix' | 'voucher'
 
 export interface Product {
   id: string
@@ -94,6 +94,21 @@ export interface CashSession {
   status: 'aberto' | 'fechado'
 }
 
+/** Funcionário que pegou algum produto e vai pagar depois ("fiado"). */
+export interface Fiado {
+  id: string
+  name: string
+  /** Data em que o produto foi pego (AAAA-MM-DD). */
+  takenAt: string
+  /** Data combinada para pagar (AAAA-MM-DD). */
+  dueAt: string
+  amount: number
+  note?: string
+  paid: boolean
+  paidAt?: string // AAAA-MM-DD
+  createdAt: string
+}
+
 export interface Settings {
   storeName: string
   fees: Record<PaymentMethod, number>
@@ -109,6 +124,7 @@ export interface AppData {
   movements: StockMovement[]
   sales: Sale[]
   cashSessions: CashSession[]
+  fiados: Fiado[]
   settings: Settings
   nextSaleNumber: number
 }

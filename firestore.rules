@@ -25,6 +25,7 @@ service cloud.firestore {
     match /lojas/{lojaId}/movements/{id} { allow read, write: if isMember(lojaId); }
     match /lojas/{lojaId}/sales/{id} { allow read, write: if isMember(lojaId); }
     match /lojas/{lojaId}/cashSessions/{id} { allow read, write: if isMember(lojaId); }
+    match /lojas/{lojaId}/fiados/{id} { allow read, write: if isMember(lojaId); }
     match /lojas/{lojaId}/config/{id} { allow read, write: if isMember(lojaId); }
 
     // Equipe: todos da loja veem, só o dono altera.
