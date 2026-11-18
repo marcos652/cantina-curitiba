@@ -65,6 +65,7 @@ export function Login() {
             <button type="button" onClick={forgot} className="link mx-auto flex">
               Esqueci minha senha
             </button>
+            <p className="text-center text-[10px] text-faint">versão {__APP_BUILD__}</p>
             <div className="flex flex-col items-center border-t border-rule pt-3">
               {accountSlot && <p className="mb-1 text-xs text-muted">Você está na {accountLabel}.</p>}
               <OtherAccounts withLabel />

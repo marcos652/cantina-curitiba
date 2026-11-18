@@ -34,7 +34,7 @@ export function explain(e: unknown): string {
 /** Código do erro e onde ele aconteceu (ex.: permission-denied em lojas/…/customers). */
 export function detail(e: unknown): string {
   const err = e as { code?: string; message?: string; path?: string }
-  return [err?.code, err?.path ? `em ${err.path}` : '', err?.code ? '' : err?.message].filter(Boolean).join(' ')
+  return [err?.code, err?.path ? `em ${err.path}` : '', err?.code ? '' : err?.message || String(e)].filter(Boolean).join(' ')
 }
 
 export function authMessage(e: unknown): string {
