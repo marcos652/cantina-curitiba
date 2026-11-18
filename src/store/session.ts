@@ -10,6 +10,8 @@ interface Session {
   errorMessage: string
   /** Detalhe técnico do erro (código e caminho no banco), para facilitar o suporte. */
   errorDetail: string
+  /** Aviso mostrado na tela de login (ex.: conta de cliente tentando entrar pelo painel). */
+  notice: string
   memory: boolean
   /** Pasta de dados da loja no banco. É o uid do dono; os funcionários usam a mesma. */
   lojaId: string
@@ -23,6 +25,7 @@ export const useSession = create<Session>(() => ({
   sync: 'ok',
   errorMessage: '',
   errorDetail: '',
+  notice: '',
   memory: false,
   lojaId: '',
   role: 'dono',

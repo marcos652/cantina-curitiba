@@ -31,7 +31,8 @@ service cloud.firestore {
       allow read: if isMember(lojaId) || (signedIn() && request.auth.uid == id);
       allow create: if signedIn() && request.auth.uid == id
         && request.resource.data.customerId == request.auth.uid
-        && exists(/databases/$(database)/documents/lojas/$(lojaId)/customers/$(request.auth.uid));
+        && exists(/databases/$(database)/documents/lojas/$(lojaId)/customers/$(request.auth.uid))
+        && get(/databases/$(database)/documents/lojas/$(lojaId)/customers/$(request.auth.uid)).data.active == true;
       allow update: if false;
       allow delete: if isOwner(lojaId);
     }
@@ -39,12 +40,22 @@ service cloud.firestore {
     match /lojas/{lojaId}/config/{id} { allow read, write: if isMember(lojaId); }
 
     // Cartão fidelidade: a equipe gerencia; cada cliente lê só o próprio cartão e os próprios lançamentos.
+    // O cliente lê o próprio cadastro (para ver o termo ou o aviso de bloqueio) e, na primeira entrada, só
+    // consegue trocar o aviso de senha provisória (mustChangePassword -> false), nada além disso.
     match /lojas/{lojaId}/customers/{id} {
       allow read: if isMember(lojaId) || (signedIn() && request.auth.uid == id);
-      allow write: if isMember(lojaId);
+      allow create, delete: if isMember(lojaId);
+      allow update: if isMember(lojaId)
+        || (signedIn() && request.auth.uid == id
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['mustChangePassword'])
+            && request.resource.data.mustChangePassword == false);
     }
+    // As compras do cliente só ficam visíveis a ele depois de assinar o termo de LGPD e enquanto o cartão está ativo.
     match /lojas/{lojaId}/cardEntries/{id} {
-      allow read: if isMember(lojaId) || (signedIn() && resource.data.customerId == request.auth.uid);
+      allow read: if isMember(lojaId)
+        || (signedIn() && resource.data.customerId == request.auth.uid
+            && exists(/databases/$(database)/documents/lojas/$(lojaId)/lgpdContratos/$(request.auth.uid))
+            && get(/databases/$(database)/documents/lojas/$(lojaId)/customers/$(request.auth.uid)).data.active == true);
       allow write: if isMember(lojaId);
     }
 

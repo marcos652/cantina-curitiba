@@ -123,6 +123,8 @@ export interface Customer {
   active: boolean
   /** Nome da cantina, para o cliente ver no termo e no cartão. */
   storeName?: string
+  /** Senha provisória: o cliente precisa criar a própria no primeiro acesso. */
+  mustChangePassword?: boolean
   createdAt: string
 }
 

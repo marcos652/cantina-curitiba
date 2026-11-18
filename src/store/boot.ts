@@ -51,6 +51,11 @@ export function authMessage(e: unknown): string {
   return 'Não foi possível entrar. Tente de novo.'
 }
 
+/** Por qual tela a pessoa entrou agora (painel da equipe ou portal do cliente). Cada tela só aceita o seu tipo de conta. */
+export type Portal = 'painel' | 'cliente'
+export const customerPortalUrl = () => `${window.location.origin}${window.location.pathname}#/cliente`
+let intendedPortal: Portal | null = null
+
 let retryWith: (() => Promise<void>) | null = null
 /** Nome da cantina digitado no cadastro: vira o nome da loja assim que a conta nova abrir. */
 let pendingStoreName: string | null = null
@@ -83,7 +88,7 @@ async function load(makeAdapter: () => Promise<Adapter>) {
 }
 
 /** Cliente do cartão fidelidade: tem vínculo com a loja, mas não é da equipe. Vê só o próprio cartão. */
-async function loadCustomer(uid: string, db: import('firebase/firestore').Firestore): Promise<boolean> {
+async function loadCustomer(uid: string, db: import('firebase/firestore').Firestore, portal: Portal | null = null): Promise<boolean> {
   try {
     const { doc, getDoc } = await import('firebase/firestore')
     const me = await getDoc(doc(db, 'usuarios', uid)).catch(() => null)
@@ -93,6 +98,13 @@ async function loadCustomer(uid: string, db: import('firebase/firestore').Firest
     // Se a leitura for recusada, a pessoa não é cliente: segue o fluxo normal da equipe.
     const cust = await getDoc(doc(db, 'lojas', lojaId, 'customers', uid)).catch(() => null)
     if (!cust?.exists()) return false
+    if (portal === 'painel') {
+      // Conta de cliente tentando entrar pelo painel da equipe.
+      setSession({ notice: 'Esta conta é de cliente. Use o login do cliente para ver o seu cartão.' })
+      const [{ auth }, { signOut }] = await Promise.all([import('@/lib/firebase'), import('firebase/auth')])
+      await signOut(auth)
+      return true
+    }
     setSession({ phase: 'loading', errorMessage: '', errorDetail: '' })
     retryWith = () => loadCustomer(uid, db).then(() => undefined)
     stopSync()
@@ -131,8 +143,17 @@ export async function boot() {
       return
     }
     setSession({ user: { uid: u.uid, email: u.email ?? '' } })
-    void loadCustomer(u.uid, db).then((isCustomer) => {
-      if (!isCustomer) void load(async () => {
+    const portal = intendedPortal
+    intendedPortal = null
+    void loadCustomer(u.uid, db, portal).then(async (isCustomer) => {
+      if (isCustomer) return
+      if (portal === 'cliente') {
+        // Conta da equipe tentando entrar pelo portal do cliente.
+        setSession({ notice: 'Esta conta é da equipe da cantina. Entre pelo login do painel.' })
+        const { signOut } = await import('firebase/auth')
+        return void signOut(auth)
+      }
+      void load(async () => {
       // Funcionários têm um registro apontando para a loja do dono; quem não tem é o dono da própria loja.
       let lojaId = u.uid
       let role: 'dono' | 'funcionario' = 'dono'
@@ -154,9 +175,16 @@ export async function boot() {
   })
 }
 
-export async function login(email: string, password: string) {
+export async function login(email: string, password: string, portal: Portal = 'painel') {
   const [{ auth }, { signInWithEmailAndPassword }] = await Promise.all([import('@/lib/firebase'), import('firebase/auth')])
-  await signInWithEmailAndPassword(auth, email.trim(), password)
+  setSession({ notice: '' })
+  intendedPortal = portal
+  try {
+    await signInWithEmailAndPassword(auth, email.trim(), password)
+  } catch (e) {
+    intendedPortal = null
+    throw e
+  }
 }
 
 export async function signup(storeName: string, email: string, password: string) {

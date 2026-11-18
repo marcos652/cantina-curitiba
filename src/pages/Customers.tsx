@@ -1,8 +1,9 @@
 import { useMemo, useRef, useState } from 'react'
-import { ChevronRight, ScanBarcode, IdCard, Search, UserPlus } from 'lucide-react'
+import { ChevronRight, Link2, ScanBarcode, IdCard, Search, UserPlus } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useSession } from '@/store/session'
 import { createCustomer, createMessage } from '@/store/users'
+import { customerPortalUrl } from '@/store/boot'
 import { customerBalance, findByCardNumber } from '@/lib/card'
 import { uniqueById } from '@/lib/unique'
 import { money } from '@/lib/format'
@@ -111,6 +112,18 @@ export function Customers() {
     <>
       <Tabs items={SALES_TABS} />
       <PageHeader title="Clientes e cartões" description="Cada cliente tem um cartão fidelidade: o que ele pega vira dívida e é pago no fechamento do mês.">
+        <Button
+          onClick={() => {
+            const url = customerPortalUrl()
+            void navigator.clipboard?.writeText(url).then(
+              () => notify('Link do cliente copiado: ' + url),
+              () => notify('Link do cliente: ' + url),
+            )
+          }}
+          title="Link para o cliente entrar e ver o próprio cartão"
+        >
+          <Link2 size={16} strokeWidth={1.75} /> Link do cliente
+        </Button>
         <Button variant="primary" onClick={() => setChargeOpen(true)}>
           <ScanBarcode size={16} strokeWidth={1.75} /> Bipar cartão
         </Button>

@@ -9,6 +9,7 @@ import { CardStatement } from '@/components/card/Statement'
 import { QrCode } from '@/components/card/QrCode'
 import { Modal } from '@/components/ui/Modal'
 import { LgpdGate } from '@/components/LgpdGate'
+import { PasswordGate } from '@/components/PasswordGate'
 import { downloadContract } from '@/lib/lgpdPdf'
 import { EmptyState } from '@/components/ui/EmptyState'
 
@@ -16,7 +17,9 @@ import { EmptyState } from '@/components/ui/EmptyState'
 export function CustomerArea() {
   const loaded = useCustomerView((s) => s.contractLoaded)
   const contract = useCustomerView((s) => s.contract)
+  const mustChange = useCustomerView((s) => Boolean(s.customer?.mustChangePassword))
   if (!loaded) return null
+  if (mustChange) return <PasswordGate />
   return contract ? <MyCard /> : <LgpdGate />
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Croissant, TriangleAlert } from 'lucide-react'
 import { useSession } from '@/store/session'
 import { boot, logout, retry } from '@/store/boot'
@@ -16,18 +16,31 @@ function Splash({ text }: { text: string }) {
   )
 }
 
+/** Portal do cliente: endereço terminado em #/cliente. */
+function useCustomerPortal(): boolean {
+  const check = () => window.location.hash.replace(/^#\/?/, '').startsWith('cliente')
+  const [is, setIs] = useState(check)
+  useEffect(() => {
+    const on = () => setIs(check())
+    window.addEventListener('hashchange', on)
+    return () => window.removeEventListener('hashchange', on)
+  }, [])
+  return is
+}
+
 /** Só mostra o sistema depois do login e da carga dos dados do banco. */
 export function AuthGate({ children }: { children: ReactNode }) {
   const phase = useSession((s) => s.phase)
   const message = useSession((s) => s.errorMessage)
   const detailText = useSession((s) => s.errorDetail)
+  const customerPortal = useCustomerPortal()
 
   useEffect(() => {
     void boot()
   }, [])
 
   if (phase === 'init') return <Splash text="Abrindo o sistema..." />
-  if (phase === 'login') return <Login />
+  if (phase === 'login') return <Login portal={customerPortal ? 'cliente' : 'painel'} />
   if (phase === 'loading') return <Splash text="Carregando os dados da cantina..." />
   if (phase === 'error') {
     return (
