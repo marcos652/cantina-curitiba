@@ -1,4 +1,7 @@
+import type { Customer } from '@/types'
+import { newCardNumber } from '@/lib/card'
 import { useSession } from './session'
+import { useStore } from './useStore'
 
 export interface Member {
   uid: string
@@ -85,4 +88,53 @@ export async function removeMember(uid: string): Promise<void> {
   batch.delete(fs.doc(db, 'lojas', lojaId, 'membros', uid))
   batch.delete(fs.doc(db, 'usuarios', uid))
   await batch.commit()
+}
+
+export interface NewCustomer {
+  nome: string
+  email: string
+  senha: string
+  limit: number
+}
+
+/** Cria o login do cliente (app secundário, sem tirar o dono da sessão) e o cartão dele. */
+export async function createCustomer(input: NewCustomer): Promise<void> {
+  const { memory, lojaId } = useSession.getState()
+  const name = input.nome.trim()
+  const email = input.email.trim()
+  const make = (id: string): Customer => ({ id, name, email, cardNumber: newCardNumber(), limit: Math.max(0, input.limit || 0), active: true, createdAt: new Date().toISOString() })
+  if (memory) {
+    useStore.getState().addCustomer(make('demo-' + Date.now()))
+    return
+  }
+  const { app, db, fs, au, fa } = await fb()
+  const secondary = fa.initializeApp(app.options, 'secundario-' + Date.now())
+  let uid = ''
+  try {
+    const sauth = au.getAuth(secondary)
+    const cred = await au.createUserWithEmailAndPassword(sauth, email, input.senha)
+    uid = cred.user.uid
+    await au.signOut(sauth)
+  } finally {
+    await fa.deleteApp(secondary)
+  }
+  const customer = make(uid)
+  const batch = fs.writeBatch(db)
+  batch.set(fs.doc(db, 'lojas', lojaId, 'customers', uid), customer)
+  batch.set(fs.doc(db, 'usuarios', uid), { lojaId, nome: name, email })
+  await batch.commit()
+  useStore.getState().addCustomer(customer)
+}
+
+/** Remove o vínculo do cliente com a loja (o login dele deixa de dar acesso). */
+export async function removeCustomerAccess(id: string): Promise<void> {
+  const { memory, lojaId } = useSession.getState()
+  if (!memory) {
+    const { db, fs } = await fb()
+    const batch = fs.writeBatch(db)
+    batch.delete(fs.doc(db, 'usuarios', id))
+    await batch.commit()
+    void lojaId
+  }
+  useStore.getState().removeCustomer(id)
 }

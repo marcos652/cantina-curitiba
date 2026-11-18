@@ -13,8 +13,8 @@ import { setSession } from './session'
  *   não foi enviado daqui.
  */
 
-export type CollKey = 'products' | 'lots' | 'movements' | 'sales' | 'cashSessions' | 'fiados'
-export const COLLS: CollKey[] = ['products', 'lots', 'movements', 'sales', 'cashSessions', 'fiados']
+export type CollKey = 'products' | 'lots' | 'movements' | 'sales' | 'cashSessions' | 'fiados' | 'customers' | 'cardEntries'
+export const COLLS: CollKey[] = ['products', 'lots', 'movements', 'sales', 'cashSessions', 'fiados', 'customers', 'cardEntries']
 
 type Item = { id: string } & Record<string, unknown>
 type Counters = { nextSaleNumber: number }
@@ -49,7 +49,7 @@ export function stable(v: unknown): string {
   )
 }
 
-const ORDER_KEY: Record<CollKey, string> = { products: 'createdAt', lots: 'createdAt', movements: 'createdAt', sales: 'createdAt', cashSessions: 'openedAt', fiados: 'createdAt' }
+const ORDER_KEY: Record<CollKey, string> = { products: 'createdAt', lots: 'createdAt', movements: 'createdAt', sales: 'createdAt', cashSessions: 'openedAt', fiados: 'createdAt', customers: 'createdAt', cardEntries: 'createdAt' }
 
 function sorted(key: CollKey, items: Item[]): Item[] {
   const f = ORDER_KEY[key]
@@ -70,7 +70,7 @@ let stop: (() => void) | null = null
 export async function startSync(adapter: Adapter, legacy?: Partial<AppData> | null): Promise<{ usedLegacy: boolean }> {
   stopSync()
 
-  const synced: Record<CollKey, Map<string, string>> = { products: new Map(), lots: new Map(), movements: new Map(), sales: new Map(), cashSessions: new Map(), fiados: new Map() }
+  const synced: Record<CollKey, Map<string, string>> = { products: new Map(), lots: new Map(), movements: new Map(), sales: new Map(), cashSessions: new Map(), fiados: new Map(), customers: new Map(), cardEntries: new Map() }
   let syncedSettings: string | null = null
   let syncedCounter: number | null = null
   let inflight = 0
@@ -102,6 +102,8 @@ export async function startSync(adapter: Adapter, legacy?: Partial<AppData> | nu
             sales: base.sales ?? [],
             cashSessions: base.cashSessions ?? [],
             fiados: base.fiados ?? [],
+            customers: [],
+            cardEntries: [],
             settings: mergeSettings(base.settings),
             nextSaleNumber: base.nextSaleNumber ?? Math.max(0, ...(base.sales ?? []).map((s) => s.number)) + 1,
           }
@@ -117,6 +119,8 @@ export async function startSync(adapter: Adapter, legacy?: Partial<AppData> | nu
       sales: sorted('sales', remote.collections.sales) as unknown as AppData['sales'],
       cashSessions: sorted('cashSessions', remote.collections.cashSessions) as unknown as AppData['cashSessions'],
       fiados: sorted('fiados', remote.collections.fiados) as unknown as AppData['fiados'],
+      customers: sorted('customers', remote.collections.customers) as unknown as AppData['customers'],
+      cardEntries: sorted('cardEntries', remote.collections.cardEntries) as unknown as AppData['cardEntries'],
       settings: mergeSettings(remote.settings),
       nextSaleNumber: Math.max(remote.counters?.nextSaleNumber ?? 1, Math.max(0, ...sales.map((s) => s.number)) + 1),
     })

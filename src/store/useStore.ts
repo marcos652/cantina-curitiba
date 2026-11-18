@@ -1,8 +1,9 @@
 import { create } from 'zustand'
-import type { AppData, Fiado, Lot, PaymentMethod, Product, Sale, SaleItem, SalePayment, Settings, StockMovement } from '@/types'
+import type { AppData, CardEntry, Customer, Fiado, Lot, PaymentMethod, Product, Sale, SaleItem, SalePayment, Settings, StockMovement } from '@/types'
 import { uid } from '@/lib/ids'
 import { nowISO, todayStr } from '@/lib/dates'
 import { calcFee, round2 } from '@/lib/payments'
+import { customerBalance, newCardNumber } from '@/lib/card'
 import { pickLotsFIFO, productLots } from '@/lib/stock'
 import { DEFAULT_SETTINGS, emptyData } from './defaults'
 import { buildDemoData } from './seed'
@@ -29,6 +30,8 @@ export interface SaleInput {
   installments?: number
   nsu?: string
   received?: number
+  /** Obrigatório quando o método é 'cartao'. */
+  customerId?: string
 }
 
 export interface FiadoInput {
@@ -64,6 +67,12 @@ export interface Store extends AppData {
   updateFiado(id: string, input: FiadoInput): Result
   setFiadoPaid(id: string, paid: boolean): void
   deleteFiado(id: string): void
+
+  addCustomer(customer: Customer): void
+  updateCustomer(id: string, patch: Partial<Pick<Customer, 'name' | 'limit' | 'active'>>): void
+  removeCustomer(id: string): void
+  addCardPayment(customerId: string, amount: number, note?: string): Result
+  removeCardEntry(id: string): void
 
   openCash(amount: number): Result
   addCashMovement(type: 'sangria' | 'reforco', amount: number, note?: string): Result
@@ -102,6 +111,8 @@ function pickData(s: AppData): AppData {
     sales: s.sales,
     cashSessions: s.cashSessions,
     fiados: s.fiados,
+    customers: s.customers,
+    cardEntries: s.cardEntries,
     settings: s.settings,
     nextSaleNumber: s.nextSaleNumber,
   }
@@ -239,6 +250,13 @@ export const useStore = create<Store>()((set, get) => ({
         }
         if (items.length === 0) return fail('Adicione produtos ao carrinho.')
 
+        let customer: Customer | undefined
+        if (input.method === 'cartao') {
+          customer = s.customers.find((c) => c.id === input.customerId)
+          if (!customer) return fail('Escolha o cliente do cartão fidelidade.')
+          if (!customer.active) return fail('O cartão deste cliente está bloqueado.')
+        }
+
         const total = round2(items.reduce((a, i) => a + i.unitPrice * i.quantity, 0))
         const feePercent = s.settings.fees[input.method] ?? 0
         const { feeValue, net } = calcFee(total, feePercent)
@@ -264,11 +282,30 @@ export const useStore = create<Store>()((set, get) => ({
           total,
           payment,
           status: 'concluida',
+          ...(customer ? { customerId: customer.id } : {}),
           cashSessionId: session.id,
           createdAt: now,
         }
+        const entries: CardEntry[] = []
+        if (customer) {
+          const owed = customerBalance(s.cardEntries, customer.id).owed
+          if (customer.limit > 0 && round2(owed + total) > customer.limit) {
+            return fail(`Limite do cartão excedido. Em aberto ${owed.toFixed(2).replace('.', ',')}, limite ${customer.limit.toFixed(2).replace('.', ',')}.`)
+          }
+          entries.push({
+            id: uid(),
+            customerId: customer.id,
+            type: 'compra',
+            amount: total,
+            items: items.map((i) => ({ name: i.name, quantity: i.quantity, unitPrice: i.unitPrice })),
+            saleId,
+            saleNumber: sale.number,
+            createdAt: now,
+          })
+        }
         set({
           lots,
+          cardEntries: [...s.cardEntries, ...entries],
           sales: [...s.sales, sale],
           movements: [...s.movements, ...movements],
           nextSaleNumber: s.nextSaleNumber + 1,
@@ -316,6 +353,7 @@ export const useStore = create<Store>()((set, get) => ({
           lots,
           movements: [...s.movements, ...movements],
           sales: s.sales.map((x) => (x.id === id ? { ...x, status: 'cancelada', canceledAt: now } : x)),
+          cardEntries: s.cardEntries.filter((e) => e.saleId !== id),
         })
         return done
       },
@@ -366,6 +404,32 @@ export const useStore = create<Store>()((set, get) => ({
 
       deleteFiado(id) {
         set((s) => ({ fiados: s.fiados.filter((f) => f.id !== id) }))
+      },
+
+      // ---------- Cartão fidelidade ----------
+      addCustomer(customer) {
+        set((s) => ({ customers: [...s.customers, { ...customer, cardNumber: customer.cardNumber || newCardNumber() }] }))
+      },
+
+      updateCustomer(id, patch) {
+        set((s) => ({ customers: s.customers.map((c) => (c.id === id ? { ...c, ...patch } : c)) }))
+      },
+
+      removeCustomer(id) {
+        set((s) => ({ customers: s.customers.filter((c) => c.id !== id), cardEntries: s.cardEntries.filter((e) => e.customerId !== id) }))
+      },
+
+      addCardPayment(customerId, amount, note) {
+        if (!(amount > 0)) return fail('Informe um valor maior que zero.')
+        const { owed } = customerBalance(get().cardEntries, customerId)
+        if (round2(amount) > owed) return fail('O pagamento é maior que a dívida em aberto.')
+        const entry: CardEntry = { id: uid(), customerId, type: 'pagamento', amount: round2(amount), note: note?.trim() || undefined, createdAt: nowISO() }
+        set((s) => ({ cardEntries: [...s.cardEntries, entry] }))
+        return done
+      },
+
+      removeCardEntry(id) {
+        set((s) => ({ cardEntries: s.cardEntries.filter((e) => e.id !== id) }))
       },
 
       // ---------- Caixa ----------
@@ -442,6 +506,8 @@ export const useStore = create<Store>()((set, get) => ({
             sales: data.sales!,
             cashSessions: data.cashSessions!,
             fiados: Array.isArray(data.fiados) ? data.fiados : [],
+            customers: Array.isArray(data.customers) ? data.customers : [],
+            cardEntries: Array.isArray(data.cardEntries) ? data.cardEntries : [],
             settings: {
               ...DEFAULT_SETTINGS,
               ...(data.settings ?? {}),

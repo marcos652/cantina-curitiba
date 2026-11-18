@@ -11,7 +11,7 @@ interface Session {
   memory: boolean
   /** Pasta de dados da loja no banco. É o uid do dono; os funcionários usam a mesma. */
   lojaId: string
-  role: 'dono' | 'funcionario'
+  role: 'dono' | 'funcionario' | 'cliente'
 }
 
 /** Estado de acesso e de sincronização. Fica separado dos dados da cantina de propósito. */

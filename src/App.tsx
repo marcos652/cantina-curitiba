@@ -17,9 +17,14 @@ import { SettingsPage } from '@/pages/Settings'
 import { Statement } from '@/pages/Statement'
 import { SaleDetail } from '@/pages/SaleDetail'
 import { Users } from '@/pages/Users'
+import { Customers } from '@/pages/Customers'
+import { MyCard } from '@/pages/MyCard'
+import { useSession } from '@/store/session'
 
 export function App() {
   const storeName = useStore((s) => s.settings.storeName)
+  const role = useSession((s) => s.role)
+  const phase = useSession((s) => s.phase)
 
   useEffect(() => {
     document.title = storeName || 'Cantina'
@@ -27,6 +32,7 @@ export function App() {
 
   return (
     <AuthGate>
+    {phase === 'ready' && role === 'cliente' ? <MyCard /> : (
     <HashRouter>
       <AppShell>
         <Routes>
@@ -41,6 +47,7 @@ export function App() {
           <Route path="/caixa" element={<Cash />} />
           <Route path="/extrato" element={<Statement />} />
           <Route path="/relatorios" element={<Reports />} />
+          <Route path="/clientes" element={<Customers />} />
           <Route path="/usuarios" element={<Users />} />
           <Route path="/configuracoes" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -48,6 +55,7 @@ export function App() {
       </AppShell>
       <Toaster />
     </HashRouter>
+    )}
     </AuthGate>
   )
 }

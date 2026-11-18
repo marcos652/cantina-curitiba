@@ -1,4 +1,4 @@
-export type PaymentMethod = 'debito' | 'credito' | 'credito_parcelado' | 'dinheiro' | 'pix' | 'voucher'
+export type PaymentMethod = 'debito' | 'credito' | 'credito_parcelado' | 'dinheiro' | 'pix' | 'voucher' | 'cartao'
 
 export interface Product {
   id: string
@@ -70,6 +70,8 @@ export interface Sale {
   total: number
   payment: SalePayment
   status: 'concluida' | 'cancelada'
+  /** Cliente do cartão fidelidade (quando pago com o cartão). */
+  customerId?: string
   cashSessionId: string
   createdAt: string
   canceledAt?: string
@@ -109,6 +111,32 @@ export interface Fiado {
   createdAt: string
 }
 
+/** Cliente com cartão fidelidade: carteira devedora paga no fechamento do mês. O id é o uid do login do cliente. */
+export interface Customer {
+  id: string
+  name: string
+  email: string
+  /** Número do cartão (16 dígitos, só para exibição). */
+  cardNumber: string
+  /** Limite de dívida em aberto. 0 = sem limite. */
+  limit: number
+  active: boolean
+  createdAt: string
+}
+
+/** Lançamento na carteira do cliente: compra (aumenta a dívida) ou pagamento (reduz). */
+export interface CardEntry {
+  id: string
+  customerId: string
+  type: 'compra' | 'pagamento'
+  amount: number
+  items?: { name: string; quantity: number; unitPrice: number }[]
+  saleId?: string
+  saleNumber?: number
+  note?: string
+  createdAt: string
+}
+
 export interface Settings {
   storeName: string
   fees: Record<PaymentMethod, number>
@@ -125,6 +153,8 @@ export interface AppData {
   sales: Sale[]
   cashSessions: CashSession[]
   fiados: Fiado[]
+  customers: Customer[]
+  cardEntries: CardEntry[]
   settings: Settings
   nextSaleNumber: number
 }

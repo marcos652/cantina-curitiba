@@ -264,6 +264,8 @@ export function buildDemoData(): AppData {
     sales,
     cashSessions: sessions,
     fiados: [],
+    customers: [],
+    cardEntries: [],
     nextSaleNumber: saleNumber,
   }
 }

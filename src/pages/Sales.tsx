@@ -5,6 +5,7 @@ import { useStore } from '@/store/useStore'
 import { openSession } from '@/store/selectors'
 import { money, num, pct } from '@/lib/format'
 import { PAYMENT_ICONS, PAYMENT_LABELS, PAYMENT_METHODS, calcFee, installmentValue, round2 } from '@/lib/payments'
+import { customerBalance } from '@/lib/card'
 import { sellableStock } from '@/lib/stock'
 import { cx } from '@/lib/cx'
 import { Button } from '@/components/ui/Button'
@@ -38,6 +39,9 @@ export function Sales() {
   const [cart, setCart] = useState<Cart>({})
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('todas')
+  const customers = useStore((s) => s.customers)
+  const cardEntries = useStore((s) => s.cardEntries)
+  const [customerId, setCustomerId] = useState('')
   const [method, setMethod] = useState<PaymentMethod>('pix')
   const [installments, setInstallments] = useState(2)
   const [received, setReceived] = useState(0)
@@ -121,15 +125,19 @@ export function Sales() {
       installments,
       nsu: method !== 'dinheiro' ? nsu : undefined,
       received: method === 'dinheiro' && received > 0 ? received : undefined,
+      customerId: method === 'cartao' ? customerId : undefined,
     })
     if (!r.ok) return notify(r.error, 'error')
     const msg = `Venda #${r.value.number} registrada · ${money(r.value.total)}`
     notify(r.value.payment.change ? `${msg} · Troco ${money(r.value.payment.change)}` : msg)
     clear()
+    setCustomerId('')
     setCartOpen(false)
   }
 
-  const canFinalize = items.length > 0 && Boolean(session) && !cashShort
+  const cardCustomer = customers.find((c) => c.id === customerId)
+  const cardOwed = cardCustomer ? customerBalance(cardEntries, cardCustomer.id).owed : 0
+  const canFinalize = items.length > 0 && Boolean(session) && !cashShort && (method !== 'cartao' || Boolean(cardCustomer?.active))
 
   const renderCart = (inModal: boolean) => (
     <div className="flex h-full flex-col">
@@ -225,7 +233,30 @@ export function Sales() {
           </div>
         )}
 
-        {method !== 'dinheiro' &&
+        {method === 'cartao' && (
+          <div className="mt-3 rounded-md bg-raised p-3">
+            <Field label="Cliente do cartão">
+              <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
+                <option value="">Escolha o cliente</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                    {c.active ? '' : ' (bloqueado)'}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            {cardCustomer && (
+              <p className="mt-2 text-sm tabular">
+                Em aberto <span className="font-semibold">{money(cardOwed)}</span> → ficará <span className="font-semibold text-danger-text">{money(round2(cardOwed + total))}</span>
+                {cardCustomer.limit > 0 && <span className="text-muted"> (limite {money(cardCustomer.limit)})</span>}
+              </p>
+            )}
+            {customers.length === 0 && <p className="mt-2 text-xs text-muted">Nenhum cliente cadastrado. Crie em Vendas → Clientes e cartões.</p>}
+          </div>
+        )}
+
+        {method !== 'dinheiro' && method !== 'cartao' &&
           (nsuOpen || nsu ? (
             <div className="mt-3 flex items-center gap-2">
               <span className="shrink-0 text-[13px] text-muted">NSU</span>

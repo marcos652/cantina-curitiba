@@ -2,6 +2,7 @@ import type { AppData } from '@/types'
 import { FirestoreAdapter, MemoryAdapter } from './adapters'
 import { setSession, useSession } from './session'
 import { startSync, stopSync, type Adapter } from './sync'
+import { startCustomerView, stopCustomerView } from './customerView'
 import { useStore } from './useStore'
 
 const params = new URLSearchParams(window.location.search)
@@ -75,6 +76,30 @@ async function load(makeAdapter: () => Promise<Adapter>) {
   }
 }
 
+/** Cliente do cartão fidelidade: tem vínculo com a loja, mas não é da equipe. Vê só o próprio cartão. */
+async function loadCustomer(uid: string, db: import('firebase/firestore').Firestore): Promise<boolean> {
+  try {
+    const { doc, getDoc } = await import('firebase/firestore')
+    const me = await getDoc(doc(db, 'usuarios', uid)).catch(() => null)
+    const lojaId = me?.exists() ? String(me.data().lojaId ?? '') : ''
+    if (!lojaId || lojaId === uid) return false
+    const member = await getDoc(doc(db, 'lojas', lojaId, 'membros', uid))
+    if (member.exists()) return false
+    const cust = await getDoc(doc(db, 'lojas', lojaId, 'customers', uid))
+    if (!cust.exists()) return false
+    setSession({ phase: 'loading', errorMessage: '' })
+    retryWith = () => loadCustomer(uid, db).then(() => undefined)
+    stopSync()
+    await startCustomerView(db, lojaId, uid)
+    setSession({ lojaId, role: 'cliente', phase: 'ready' })
+    return true
+  } catch (e) {
+    console.error('Falha ao abrir o cartão', e)
+    setSession({ phase: 'error', errorMessage: explain(e) })
+    return true
+  }
+}
+
 export function retry() {
   void retryWith?.()
 }
@@ -94,12 +119,14 @@ export async function boot() {
   onAuthStateChanged(auth, (u) => {
     if (!u) {
       stopSync()
+      stopCustomerView()
       useStore.getState().clear()
       setSession({ phase: 'login', user: null, sync: 'ok' })
       return
     }
     setSession({ user: { uid: u.uid, email: u.email ?? '' } })
-    void load(async () => {
+    void loadCustomer(u.uid, db).then((isCustomer) => {
+      if (!isCustomer) void load(async () => {
       // Funcionários têm um registro apontando para a loja do dono; quem não tem é o dono da própria loja.
       let lojaId = u.uid
       let role: 'dono' | 'funcionario' = 'dono'
@@ -116,6 +143,7 @@ export async function boot() {
       }
       setSession({ lojaId, role })
       return new FirestoreAdapter(db, lojaId)
+    })
     })
   })
 }

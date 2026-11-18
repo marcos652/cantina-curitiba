@@ -8,6 +8,7 @@ import {
   FileText,
   History,
   Home,
+  IdCard,
   LogOut,
   Menu,
   Package,
@@ -49,10 +50,11 @@ const GROUPS: Group[] = [
   {
     label: 'Vendas',
     icon: ShoppingBag,
-    match: ['/vendas'],
+    match: ['/vendas', '/clientes'],
     items: [
       { to: '/vendas', label: 'Nova venda', hint: 'Registrar uma venda no balcão', icon: ShoppingBag, end: true },
       { to: '/vendas/historico', label: 'Histórico de vendas', hint: 'Consultar, abrir e cancelar vendas', icon: History },
+      { to: '/clientes', label: 'Clientes e cartões', hint: 'Cartão fidelidade, saldo e pagamentos', icon: IdCard },
     ],
   },
   {

@@ -1,7 +1,7 @@
 import type { PaymentMethod } from '@/types'
-import { Banknote, CreditCard, Layers, QrCode, Ticket, type LucideIcon } from 'lucide-react'
+import { Banknote, CreditCard, IdCard, Layers, QrCode, Ticket, type LucideIcon } from 'lucide-react'
 
-export const PAYMENT_METHODS: PaymentMethod[] = ['debito', 'credito', 'credito_parcelado', 'dinheiro', 'pix', 'voucher']
+export const PAYMENT_METHODS: PaymentMethod[] = ['debito', 'credito', 'credito_parcelado', 'dinheiro', 'pix', 'voucher', 'cartao']
 
 export const PAYMENT_ICONS: Record<PaymentMethod, LucideIcon> = {
   debito: CreditCard,
@@ -10,6 +10,7 @@ export const PAYMENT_ICONS: Record<PaymentMethod, LucideIcon> = {
   dinheiro: Banknote,
   pix: QrCode,
   voucher: Ticket,
+  cartao: IdCard,
 }
 
 export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
@@ -19,6 +20,7 @@ export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   dinheiro: 'Dinheiro',
   pix: 'Pix',
   voucher: 'Voucher',
+  cartao: 'Cartão fidelidade',
 }
 
 export const PAYMENT_SHORT: Record<PaymentMethod, string> = {
@@ -28,6 +30,7 @@ export const PAYMENT_SHORT: Record<PaymentMethod, string> = {
   dinheiro: 'Dinheiro',
   pix: 'Pix',
   voucher: 'Voucher',
+  cartao: 'Cartão',
 }
 
 export function round2(n: number): number {
