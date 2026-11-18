@@ -102,7 +102,7 @@ export async function createCustomer(input: NewCustomer): Promise<void> {
   const { memory, lojaId } = useSession.getState()
   const name = input.nome.trim()
   const email = input.email.trim()
-  const make = (id: string): Customer => ({ id, name, email, cardNumber: newCardNumber(), limit: Math.max(0, input.limit || 0), active: true, createdAt: new Date().toISOString() })
+  const make = (id: string): Customer => ({ id, name, email, cardNumber: newCardNumber(), limit: Math.max(0, input.limit || 0), active: true, createdAt: new Date().toISOString(), storeName: useStore.getState().settings.storeName })
   if (memory) {
     useStore.getState().addCustomer(make('demo-' + Date.now()))
     return

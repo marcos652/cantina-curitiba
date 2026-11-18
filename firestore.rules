@@ -26,6 +26,16 @@ service cloud.firestore {
     match /lojas/{lojaId}/sales/{id} { allow read, write: if isMember(lojaId); }
     match /lojas/{lojaId}/cashSessions/{id} { allow read, write: if isMember(lojaId); }
     match /lojas/{lojaId}/fiados/{id} { allow read, write: if isMember(lojaId); }
+    // Termo de LGPD: o cliente cria o próprio (uma vez, sem poder alterar); a equipe lê; só o dono apaga.
+    match /lojas/{lojaId}/lgpdContratos/{id} {
+      allow read: if isMember(lojaId) || (signedIn() && request.auth.uid == id);
+      allow create: if signedIn() && request.auth.uid == id
+        && request.resource.data.customerId == request.auth.uid
+        && exists(/databases/$(database)/documents/lojas/$(lojaId)/customers/$(request.auth.uid));
+      allow update: if false;
+      allow delete: if isOwner(lojaId);
+    }
+
     match /lojas/{lojaId}/config/{id} { allow read, write: if isMember(lojaId); }
 
     // Cartão fidelidade: a equipe gerencia; cada cliente lê só o próprio cartão e os próprios lançamentos.

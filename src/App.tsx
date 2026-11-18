@@ -18,8 +18,9 @@ import { Statement } from '@/pages/Statement'
 import { SaleDetail } from '@/pages/SaleDetail'
 import { Users } from '@/pages/Users'
 import { Customers } from '@/pages/Customers'
+import { Access, Contracts } from '@/pages/Access'
 import { CustomerDetail } from '@/pages/CustomerDetail'
-import { MyCard } from '@/pages/MyCard'
+import { CustomerArea } from '@/pages/MyCard'
 import { useSession } from '@/store/session'
 import { accountSlot, accountLabel } from '@/lib/accounts'
 
@@ -27,6 +28,14 @@ export function App() {
   const storeName = useStore((s) => s.settings.storeName)
   const role = useSession((s) => s.role)
   const phase = useSession((s) => s.phase)
+  const customerCount = useStore((s) => s.customers.length)
+
+  // Clientes criados antes do termo não tinham o nome da cantina gravado: completa para o termo e o cartão.
+  useEffect(() => {
+    if (role !== 'dono' || phase !== 'ready') return
+    const st = useStore.getState()
+    st.customers.filter((c) => !c.storeName && st.settings.storeName).forEach((c) => st.updateCustomer(c.id, { storeName: st.settings.storeName }))
+  }, [role, phase, customerCount])
 
   useEffect(() => {
     document.title = (storeName || 'Cantina') + (accountSlot ? ` · ${accountLabel}` : '')
@@ -34,7 +43,7 @@ export function App() {
 
   return (
     <AuthGate>
-    {phase === 'ready' && role === 'cliente' ? <MyCard /> : (
+    {phase === 'ready' && role === 'cliente' ? <CustomerArea /> : (
     <HashRouter>
       <AppShell>
         <Routes>
@@ -51,6 +60,8 @@ export function App() {
           <Route path="/relatorios" element={<Reports />} />
           <Route path="/clientes" element={<Customers />} />
           <Route path="/clientes/:id" element={<CustomerDetail />} />
+          <Route path="/acessos" element={<Access />} />
+          <Route path="/acessos/contratos" element={<Contracts />} />
           <Route path="/usuarios" element={<Users />} />
           <Route path="/configuracoes" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

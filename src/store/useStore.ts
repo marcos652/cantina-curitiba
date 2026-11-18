@@ -70,7 +70,7 @@ export interface Store extends AppData {
   deleteFiado(id: string): void
 
   addCustomer(customer: Customer): void
-  updateCustomer(id: string, patch: Partial<Pick<Customer, 'name' | 'limit' | 'active'>>): void
+  updateCustomer(id: string, patch: Partial<Pick<Customer, 'name' | 'limit' | 'active' | 'storeName'>>): void
   removeCustomer(id: string): void
   addCardPayment(customerId: string, amount: number, note?: string): Result
   removeCardEntry(id: string): void

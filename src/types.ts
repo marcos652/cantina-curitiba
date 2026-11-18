@@ -121,7 +121,26 @@ export interface Customer {
   /** Limite de dívida em aberto. 0 = sem limite. */
   limit: number
   active: boolean
+  /** Nome da cantina, para o cliente ver no termo e no cartão. */
+  storeName?: string
   createdAt: string
+}
+
+/** Termo de LGPD assinado pelo cliente. O id é o do cliente (um termo por pessoa). */
+export interface LgpdContract {
+  id: string
+  customerId: string
+  name: string
+  email: string
+  /** Nome digitado como assinatura. */
+  signedName: string
+  signedAt: string
+  version: string
+  /** Texto exato que o cliente aceitou. */
+  text: string
+  /** SHA-256 do conteúdo, para verificar que nada foi alterado. */
+  hash: string
+  userAgent?: string
 }
 
 /** Lançamento na carteira do cliente: compra (aumenta a dívida) ou pagamento (reduz). */

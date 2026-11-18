@@ -9,6 +9,7 @@ import {
   History,
   Home,
   IdCard,
+  ShieldCheck,
   LogOut,
   Menu,
   Package,
@@ -82,9 +83,10 @@ const GROUPS: Group[] = [
   {
     label: 'Administração',
     icon: Settings,
-    match: ['/usuarios', '/configuracoes'],
+    match: ['/usuarios', '/acessos', '/configuracoes'],
     items: [
       { to: '/usuarios', label: 'Usuários', hint: 'Acessos da sua equipe', icon: Users, ownerOnly: true },
+      { to: '/acessos', label: 'Acessos e LGPD', hint: 'Acesso dos clientes e contratos assinados', icon: ShieldCheck, ownerOnly: true },
       { to: '/configuracoes', label: 'Configurações', hint: 'Nome, logo, taxas e dados', icon: SlidersHorizontal },
     ],
   },
