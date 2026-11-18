@@ -20,6 +20,7 @@ function Splash({ text }: { text: string }) {
 export function AuthGate({ children }: { children: ReactNode }) {
   const phase = useSession((s) => s.phase)
   const message = useSession((s) => s.errorMessage)
+  const detailText = useSession((s) => s.errorDetail)
 
   useEffect(() => {
     void boot()
@@ -37,6 +38,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
           </span>
           <h1 className="mt-3 text-base font-semibold">Não foi possível abrir os dados</h1>
           <p className="mt-1.5 text-sm text-muted">{message}</p>
+          {detailText && <p className="mt-2 break-words rounded bg-raised px-2 py-1 text-[11px] text-faint">Detalhe técnico: {detailText}</p>}
           <div className="mt-5 flex justify-center gap-2">
             <Button variant="primary" onClick={retry}>
               Tentar de novo

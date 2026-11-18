@@ -24,10 +24,12 @@ export class FirestoreAdapter implements Adapter {
   }
 
   async loadAll(): Promise<RemoteData> {
+    // Marca em qual coleção a leitura falhou (aparece no detalhe técnico da tela de erro).
+    const at = <T,>(path: string, p: Promise<T>) => p.catch((e) => Promise.reject(Object.assign(e as object, { path })))
     const [snaps, settings, counters] = await Promise.all([
-      Promise.all(COLLS.map((k) => getDocs(this.col(k)))),
-      getDoc(this.cfg('settings')),
-      getDoc(this.cfg('counters')),
+      Promise.all(COLLS.map((k) => at(`lojas/…/${k}`, getDocs(this.col(k))))),
+      at('lojas/…/config/settings', getDoc(this.cfg('settings'))),
+      at('lojas/…/config/counters', getDoc(this.cfg('counters'))),
     ])
     const collections = {} as Record<CollKey, Item[]>
     COLLS.forEach((k, i) => {

@@ -15,10 +15,11 @@ let stop: (() => void) | null = null
 export async function startCustomerView(db: import('firebase/firestore').Firestore, lojaId: string, uid: string): Promise<void> {
   stopCustomerView()
   const fs = await import('firebase/firestore')
-  const cust = await fs.getDoc(fs.doc(db, 'lojas', lojaId, 'customers', uid))
+  const at = <T,>(path: string, p: Promise<T>) => p.catch((e) => Promise.reject(Object.assign(e as object, { path })))
+  const cust = await at('lojas/…/customers/(seu cartão)', fs.getDoc(fs.doc(db, 'lojas', lojaId, 'customers', uid)))
   if (!cust.exists()) throw Object.assign(new Error('cliente'), { code: 'permission-denied' })
   const q = fs.query(fs.collection(db, 'lojas', lojaId, 'cardEntries'), fs.where('customerId', '==', uid))
-  const first = await fs.getDocs(q)
+  const first = await at('lojas/…/cardEntries (seus lançamentos)', fs.getDocs(q))
   const toEntries = (snap: import('firebase/firestore').QuerySnapshot) =>
     snap.docs.map((d) => ({ ...d.data(), id: d.id }) as CardEntry).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   useCustomerView.setState({ customer: { ...cust.data(), id: cust.id } as Customer, entries: toEntries(first) })

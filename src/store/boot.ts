@@ -31,6 +31,12 @@ export function explain(e: unknown): string {
   return 'Não foi possível carregar os dados da cantina.'
 }
 
+/** Código do erro e onde ele aconteceu (ex.: permission-denied em lojas/…/customers). */
+export function detail(e: unknown): string {
+  const err = e as { code?: string; message?: string; path?: string }
+  return [err?.code, err?.path ? `em ${err.path}` : '', err?.code ? '' : err?.message].filter(Boolean).join(' ')
+}
+
 export function authMessage(e: unknown): string {
   const code = (e as { code?: string })?.code ?? ''
   if (['auth/invalid-credential', 'auth/wrong-password', 'auth/user-not-found', 'auth/invalid-email'].includes(code)) return 'E-mail ou senha incorretos.'
@@ -51,7 +57,7 @@ let pendingStoreName: string | null = null
 
 async function load(makeAdapter: () => Promise<Adapter>) {
   retryWith = () => load(makeAdapter)
-  setSession({ phase: 'loading', errorMessage: '' })
+  setSession({ phase: 'loading', errorMessage: '', errorDetail: '' })
   try {
     const { usedLegacy } = await startSync(await makeAdapter(), legacyData())
     // Os dados antigos (guardados só neste navegador) já foram enviados ao banco: fica uma cópia de segurança.
@@ -72,7 +78,7 @@ async function load(makeAdapter: () => Promise<Adapter>) {
     setSession({ phase: 'ready' })
   } catch (e) {
     console.error('Falha ao carregar os dados', e)
-    setSession({ phase: 'error', errorMessage: explain(e) })
+    setSession({ phase: 'error', errorMessage: explain(e), errorDetail: detail(e) })
   }
 }
 
@@ -87,7 +93,7 @@ async function loadCustomer(uid: string, db: import('firebase/firestore').Firest
     // Se a leitura for recusada, a pessoa não é cliente: segue o fluxo normal da equipe.
     const cust = await getDoc(doc(db, 'lojas', lojaId, 'customers', uid)).catch(() => null)
     if (!cust?.exists()) return false
-    setSession({ phase: 'loading', errorMessage: '' })
+    setSession({ phase: 'loading', errorMessage: '', errorDetail: '' })
     retryWith = () => loadCustomer(uid, db).then(() => undefined)
     stopSync()
     await startCustomerView(db, lojaId, uid)
@@ -95,7 +101,7 @@ async function loadCustomer(uid: string, db: import('firebase/firestore').Firest
     return true
   } catch (e) {
     console.error('Falha ao abrir o cartão', e)
-    setSession({ phase: 'error', errorMessage: explain(e) })
+    setSession({ phase: 'error', errorMessage: explain(e), errorDetail: detail(e) })
     return true
   }
 }
@@ -135,7 +141,7 @@ export async function boot() {
       const me = await getDoc(doc(db, 'usuarios', u.uid)).catch(() => null)
       if (me?.exists() && me.data().lojaId && me.data().lojaId !== u.uid) {
         // Só vale se o dono da loja ainda mantém esta pessoa na equipe.
-        const member = await getDoc(doc(db, 'lojas', String(me.data().lojaId), 'membros', u.uid))
+        const member = await getDoc(doc(db, 'lojas', String(me.data().lojaId), 'membros', u.uid)).catch((e) => Promise.reject(Object.assign(e as object, { path: 'lojas/…/membros (equipe)' })))
         if (member.exists()) {
           lojaId = String(me.data().lojaId)
           role = 'funcionario'
