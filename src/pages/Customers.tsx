@@ -12,7 +12,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Badge } from '@/components/ui/Badge'
 import { ConfirmDialog } from '@/components/ui/Modal'
-import { CreditCard } from '@/components/card/CreditCard'
+import { FlipCard } from '@/components/card/FlipCard'
 import { CardStatement } from '@/components/card/Statement'
 
 export function Customers() {
@@ -141,22 +141,17 @@ export function Customers() {
 
         {selected && balance && (
           <div className="min-w-0 space-y-4">
-            <div className="card flex flex-col items-center gap-4 p-4 sm:flex-row sm:items-start">
-              <CreditCard name={selected.name} number={selected.cardNumber} storeName={storeName} logo={logo} active={selected.active} className="shrink-0" />
-              <div className="w-full min-w-0 flex-1 space-y-3">
+            <section className="flex flex-col items-center py-4">
+              <FlipCard name={selected.name} number={selected.cardNumber} storeName={storeName} logo={logo} active={selected.active} balance={balance} limit={selected.limit} />
+              <p className="mt-3 text-xs text-muted">Deslize o cartão para o lado para virar</p>
+            </section>
+            <div className="card space-y-3 p-4">
+              <div className="flex items-end justify-between gap-3">
                 <div>
                   <p className="text-xs text-muted">Saldo devedor</p>
                   <p className={cx('text-2xl font-bold tabular', balance.owed > 0 ? 'text-danger-text' : 'text-ok-text')}>{money(balance.owed)}</p>
                 </div>
-                <div className="flex items-end gap-2">
-                  <Field label="Registrar pagamento" className="flex-1"><MoneyInput value={payAmount} onChange={setPayAmount} /></Field>
-                  <Button variant="primary" disabled={payAmount <= 0 || balance.owed <= 0} onClick={pay}>Receber</Button>
-                </div>
-                <div className="flex gap-1.5">
-                  <button type="button" onClick={() => setPayAmount(balance.owed)} className="h-7 rounded border border-control bg-white px-2 text-xs text-muted hover:text-ink">Quitar tudo ({money(balance.owed)})</button>
-                </div>
-                <Input value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder="Observação (ex.: Pix, dinheiro, fechamento de outubro)" className="h-8" />
-                <div className="flex gap-2 pt-1">
+                <div className="flex gap-2">
                   <Button size="sm" onClick={() => updateCustomer(selected.id, { active: !selected.active })}>
                     {selected.active ? <><Ban size={14} strokeWidth={1.75} /> Bloquear cartão</> : <><CheckCircle2 size={14} strokeWidth={1.75} /> Desbloquear</>}
                   </Button>
@@ -167,6 +162,14 @@ export function Customers() {
                   )}
                 </div>
               </div>
+              <div className="flex items-end gap-2">
+                <Field label="Registrar pagamento" className="flex-1"><MoneyInput value={payAmount} onChange={setPayAmount} /></Field>
+                <Button variant="primary" disabled={payAmount <= 0 || balance.owed <= 0} onClick={pay}>Receber</Button>
+              </div>
+              <div className="flex gap-1.5">
+                <button type="button" onClick={() => setPayAmount(balance.owed)} className="h-7 rounded border border-control bg-white px-2 text-xs text-muted hover:text-ink">Quitar tudo ({money(balance.owed)})</button>
+              </div>
+              <Input value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder="Observação (ex.: Pix, dinheiro, fechamento de outubro)" className="h-8" />
             </div>
             <CardStatement customerId={selected.id} entries={entries} limit={selected.limit} onRemoveEntry={(e) => removeCardEntry(e.id)} />
           </div>

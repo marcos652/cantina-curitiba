@@ -11,6 +11,7 @@ interface Props {
   active: boolean
   balance: Balance
   limit: number
+  logo?: string
 }
 
 function Back({ balance, limit, active }: { balance: Balance; limit: number; active: boolean }) {
@@ -44,7 +45,7 @@ function Back({ balance, limit, active }: { balance: Balance; limit: number; act
 }
 
 /** Cartão que gira ao deslizar o dedo (ou ao tocar/clicar). A frente é o cartão; o verso mostra o saldo. */
-export function FlipCard({ name, number, storeName, active, balance, limit }: Props) {
+export function FlipCard({ name, number, storeName, active, balance, limit, logo }: Props) {
   const [flipped, setFlipped] = useState(false)
   const [drag, setDrag] = useState(0)
   const start = useRef<number | null>(null)
@@ -94,7 +95,7 @@ export function FlipCard({ name, number, storeName, active, balance, limit }: Pr
         }}
       >
         <div className="absolute inset-0" style={face}>
-          <CreditCard name={name} number={number} storeName={storeName} active={active} className="h-full max-w-none" />
+          <CreditCard name={name} number={number} storeName={storeName} logo={logo} active={active} className="h-full max-w-none" />
         </div>
         <div className="absolute inset-0" style={{ ...face, transform: 'rotateY(180deg)' }}>
           <Back balance={balance} limit={limit} active={active} />
