@@ -43,3 +43,9 @@ export function monthLabel(key: string): string {
   const s = new Date(y, m - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
+
+/** Acha o cliente pelo número do cartão (aceita o que o leitor digitar, com ou sem espaços). */
+export function findByCardNumber<T extends { cardNumber: string }>(list: T[], raw: string): T | undefined {
+  const digits = raw.replace(/\D/g, '')
+  return digits.length >= 8 ? list.find((c) => c.cardNumber.replace(/\D/g, '') === digits) : undefined
+}

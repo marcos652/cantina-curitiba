@@ -73,7 +73,7 @@ export function CardStatement({ customerId, entries, limit, onRemoveEntry }: { c
                   </span>
                   <div className="min-w-0">
                     <p className="text-sm font-medium">
-                      {e.type === 'compra' ? (e.items ?? []).map((i) => `${i.quantity}× ${i.name}`).join(', ') || 'Compra' : e.note ? `Pagamento · ${e.note}` : 'Pagamento'}
+                      {e.type === 'compra' ? (e.items ?? []).map((i) => `${i.quantity}× ${i.name}`).join(', ') || e.note || 'Compra' : e.note ? `Pagamento · ${e.note}` : 'Pagamento'}
                     </p>
                     <p className="text-xs text-muted tabular">
                       {formatDateTime(e.createdAt)}

@@ -5,12 +5,13 @@ import { useStore } from '@/store/useStore'
 import { openSession } from '@/store/selectors'
 import { money, num, pct } from '@/lib/format'
 import { PAYMENT_ICONS, PAYMENT_LABELS, PAYMENT_METHODS, calcFee, installmentValue, round2 } from '@/lib/payments'
-import { customerBalance } from '@/lib/card'
+import { customerBalance, findByCardNumber } from '@/lib/card'
 import { sellableStock } from '@/lib/stock'
 import { cx } from '@/lib/cx'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, MoneyInput, Select } from '@/components/ui/Field'
 import { Modal } from '@/components/ui/Modal'
+import { CameraScanButton } from '@/components/card/CameraScanner'
 import { Chips, Tabs } from '@/components/ui/Tabs'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -43,6 +44,7 @@ export function Sales() {
   const customers = useStore((s) => s.customers)
   const cardEntries = useStore((s) => s.cardEntries)
   const [customerId, setCustomerId] = useState('')
+  const [scan, setScan] = useState('')
   const [method, setMethod] = useState<PaymentMethod>('pix')
   const [installments, setInstallments] = useState(2)
   const [received, setReceived] = useState(0)
@@ -133,6 +135,7 @@ export function Sales() {
     notify(r.value.payment.change ? `${msg} · Troco ${money(r.value.payment.change)}` : msg)
     clear()
     setCustomerId('')
+    setScan('')
     setCartOpen(false)
   }
 
@@ -236,7 +239,34 @@ export function Sales() {
 
         {method === 'cartao' && (
           <div className="mt-3 rounded-md bg-raised p-3">
-            <Field label="Cliente do cartão">
+            <div className="mb-3">
+              <CameraScanButton
+                onCode={(c) => {
+                  const found = findByCardNumber(customers, c)
+                  if (found) setCustomerId(found.id)
+                  else notify('Cartão não encontrado.', 'error')
+                }}
+              />
+            </div>
+            <Field label="Bipe o cartão" hint="Passe o leitor no código de barras do cartão (ou digite o número) e tecle Enter.">
+              <Input
+                value={scan}
+                onChange={(e) => setScan(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter') return
+                  e.preventDefault()
+                  const found = findByCardNumber(customers, scan)
+                  if (found) {
+                    setCustomerId(found.id)
+                    setScan('')
+                  } else notify('Cartão não encontrado.', 'error')
+                }}
+                inputMode="numeric"
+                placeholder="Número do cartão"
+                autoFocus
+              />
+            </Field>
+            <Field label="Cliente do cartão" className="mt-3">
               <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
                 <option value="">Escolha o cliente</option>
                 {customers.map((c) => (

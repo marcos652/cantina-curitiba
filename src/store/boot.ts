@@ -83,10 +83,10 @@ async function loadCustomer(uid: string, db: import('firebase/firestore').Firest
     const me = await getDoc(doc(db, 'usuarios', uid)).catch(() => null)
     const lojaId = me?.exists() ? String(me.data().lojaId ?? '') : ''
     if (!lojaId || lojaId === uid) return false
-    const member = await getDoc(doc(db, 'lojas', lojaId, 'membros', uid))
-    if (member.exists()) return false
-    const cust = await getDoc(doc(db, 'lojas', lojaId, 'customers', uid))
-    if (!cust.exists()) return false
+    // O cliente só consegue ler o próprio cartão (não a lista da equipe), então é por aqui que ele é reconhecido.
+    // Se a leitura for recusada, a pessoa não é cliente: segue o fluxo normal da equipe.
+    const cust = await getDoc(doc(db, 'lojas', lojaId, 'customers', uid)).catch(() => null)
+    if (!cust?.exists()) return false
     setSession({ phase: 'loading', errorMessage: '' })
     retryWith = () => loadCustomer(uid, db).then(() => undefined)
     stopSync()

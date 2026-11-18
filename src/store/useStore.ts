@@ -74,6 +74,8 @@ export interface Store extends AppData {
   removeCustomer(id: string): void
   addCardPayment(customerId: string, amount: number, note?: string): Result
   removeCardEntry(id: string): void
+  /** Cobrança rápida no cartão (sem produtos): o balconista bipa o cartão e digita o valor. */
+  addCardCharge(customerId: string, amount: number, note?: string): Result
 
   openCash(amount: number): Result
   addCashMovement(type: 'sangria' | 'reforco', amount: number, note?: string): Result
@@ -430,6 +432,22 @@ export const useStore = create<Store>()((set, get) => ({
         if (round2(amount) > owed) return fail('O pagamento é maior que a dívida em aberto.')
         const entry: CardEntry = { id: uid(), customerId, type: 'pagamento', amount: round2(amount), note: note?.trim() || undefined, createdAt: nowISO() }
         set((s) => ({ cardEntries: [...s.cardEntries, entry] }))
+        return done
+      },
+
+      addCardCharge(customerId, amount, note) {
+        const s = get()
+        const customer = s.customers.find((c) => c.id === customerId)
+        if (!customer) return fail('Cliente não encontrado.')
+        if (!customer.active) return fail('O cartão deste cliente está bloqueado.')
+        if (!(amount > 0)) return fail('Informe um valor maior que zero.')
+        const value = round2(amount)
+        const { owed } = customerBalance(s.cardEntries, customerId)
+        if (customer.limit > 0 && round2(owed + value) > customer.limit) {
+          return fail(`Limite do cartão excedido. Em aberto ${owed.toFixed(2).replace('.', ',')}, limite ${customer.limit.toFixed(2).replace('.', ',')}.`)
+        }
+        const entry: CardEntry = { id: uid(), customerId, type: 'compra', amount: value, note: note?.trim() || undefined, createdAt: nowISO() }
+        set((st) => ({ cardEntries: [...st.cardEntries, entry] }))
         return done
       },
 

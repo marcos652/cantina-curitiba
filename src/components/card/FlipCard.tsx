@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { CreditCard } from './CreditCard'
+import { Barcode } from './Barcode'
 import { money } from '@/lib/format'
 import { cx } from '@/lib/cx'
 import type { Balance } from '@/lib/card'
@@ -14,12 +15,12 @@ interface Props {
   logo?: string
 }
 
-function Back({ balance, limit, active }: { balance: Balance; limit: number; active: boolean }) {
+function Back({ balance, limit, active, number }: { balance: Balance; limit: number; active: boolean; number: string }) {
   return (
     <div className="absolute inset-0 overflow-hidden rounded-2xl bg-gradient-to-br from-[#2b3038] via-[#14171c] to-[#0a0c0f] text-white shadow-xl ring-1 ring-white/10">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_40%,rgba(255,255,255,0.07)_50%,transparent_60%)]" />
-      <div className="mt-5 h-10 w-full bg-black" />
-      <div className="relative flex h-[calc(100%-4.5rem)] flex-col justify-between p-5 pt-4">
+      <div className="mt-4 h-8 w-full bg-black" />
+      <div className="relative flex h-[calc(100%-3.5rem)] flex-col justify-between p-5 pt-3 pb-3">
         <div className="grid grid-cols-2 gap-3">
           <div>
             <p className="text-[9px] uppercase tracking-[0.2em] text-[#8f98a3]">Saldo devedor</p>
@@ -38,7 +39,12 @@ function Back({ balance, limit, active }: { balance: Balance; limit: number; act
             <p className="text-sm font-semibold text-[#e6eaef] tabular">{limit > 0 ? money(Math.max(0, limit - balance.owed)) : 'Sem limite'}</p>
           </div>
         </div>
-        <p className="text-center text-[10px] uppercase tracking-[0.2em] text-[#8f98a3]">{active ? 'Pague o saldo no fechamento do mês' : 'Cartão bloqueado'}</p>
+        <div>
+          <div className="h-9 rounded-md bg-white px-3 py-1">
+            <Barcode value={number} />
+          </div>
+          <p className="mt-1 text-center text-[9px] uppercase tracking-[0.2em] text-[#8f98a3]">{active ? 'Apresente no balcão para pagar' : 'Cartão bloqueado'}</p>
+        </div>
       </div>
     </div>
   )
@@ -98,7 +104,7 @@ export function FlipCard({ name, number, storeName, active, balance, limit, logo
           <CreditCard name={name} number={number} storeName={storeName} logo={logo} active={active} className="h-full max-w-none" />
         </div>
         <div className="absolute inset-0" style={{ ...face, transform: 'rotateY(180deg)' }}>
-          <Back balance={balance} limit={limit} active={active} />
+          <Back balance={balance} limit={limit} active={active} number={number} />
         </div>
       </div>
     </div>

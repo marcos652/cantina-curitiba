@@ -1,9 +1,9 @@
 import { useMemo, useRef, useState } from 'react'
-import { ChevronRight, IdCard, Search, UserPlus } from 'lucide-react'
+import { ChevronRight, ScanBarcode, IdCard, Search, UserPlus } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useSession } from '@/store/session'
 import { createCustomer, createMessage } from '@/store/users'
-import { customerBalance } from '@/lib/card'
+import { customerBalance, findByCardNumber } from '@/lib/card'
 import { uniqueById } from '@/lib/unique'
 import { money } from '@/lib/format'
 import { cx } from '@/lib/cx'
@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { Tabs } from '@/components/ui/Tabs'
+import { CameraScanButton } from '@/components/card/CameraScanner'
 import { SALES_TABS } from './Sales'
 import { CustomerPanel } from './CustomerDetail'
 
@@ -23,6 +24,37 @@ export function Customers() {
   const customers = useStore((s) => s.customers)
   const entries = useStore((s) => s.cardEntries)
   const notify = useStore((s) => s.notify)
+  const addCardCharge = useStore((s) => s.addCardCharge)
+  const [chargeOpen, setChargeOpen] = useState(false)
+  const [scan, setScan] = useState('')
+  const [chargeId, setChargeId] = useState<string | null>(null)
+  const [chargeValue, setChargeValue] = useState(0)
+  const [chargeNote, setChargeNote] = useState('')
+  const chargeCustomer = customers.find((c) => c.id === chargeId)
+  const chargeOwed = chargeCustomer ? customerBalance(entries, chargeCustomer.id).owed : 0
+
+  function closeCharge() {
+    setChargeOpen(false)
+    setScan('')
+    setChargeId(null)
+    setChargeValue(0)
+    setChargeNote('')
+  }
+  function lookup(raw = scan) {
+    const found = findByCardNumber(customers, raw)
+    if (!found) return notify('Cartão não encontrado.', 'error')
+    setChargeId(found.id)
+    setScan('')
+  }
+  function charge() {
+    if (!chargeCustomer) return
+    const r = addCardCharge(chargeCustomer.id, chargeValue, chargeNote)
+    if (!r.ok) return notify(r.error, 'error')
+    notify(`${money(chargeValue)} lançado no cartão de ${chargeCustomer.name}.`)
+    setChargeId(null)
+    setChargeValue(0)
+    setChargeNote('')
+  }
 
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -40,7 +72,7 @@ export function Customers() {
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase()
     return uniqueById(customers)
-      .filter((c) => !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q))
+      .filter((c) => !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.cardNumber.replace(/\D/g, '').includes(q.replace(/\D/g, '') || '\u0000'))
       .map((c) => ({ c, b: customerBalance(entries, c.id) }))
       .sort((a, b) => a.c.name.localeCompare(b.c.name))
   }, [customers, entries, query])
@@ -79,8 +111,11 @@ export function Customers() {
     <>
       <Tabs items={SALES_TABS} />
       <PageHeader title="Clientes e cartões" description="Cada cliente tem um cartão fidelidade: o que ele pega vira dívida e é pago no fechamento do mês.">
+        <Button variant="primary" onClick={() => setChargeOpen(true)}>
+          <ScanBarcode size={16} strokeWidth={1.75} /> Bipar cartão
+        </Button>
         {isOwner && (
-          <Button variant="primary" onClick={() => setOpen(true)}>
+          <Button onClick={() => setOpen(true)}>
             <UserPlus size={16} strokeWidth={1.75} /> Novo cliente
           </Button>
         )}
@@ -97,7 +132,20 @@ export function Customers() {
           <p className="card-title flex items-center gap-2">Pessoas <span className="count-pill">{rows.length}</span></p>
           <div className="relative w-full sm:w-64">
             <Search size={15} strokeWidth={1.75} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
-            <Input placeholder="Buscar por nome ou e-mail" value={query} onChange={(e) => setQuery(e.target.value)} className="h-8 pl-9" />
+            <Input
+              placeholder="Buscar por nome, e-mail ou número do cartão"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return
+                const found = findByCardNumber(customers, query)
+                if (found) {
+                  setOpenId(found.id)
+                  setQuery('')
+                }
+              }}
+              className="h-8 pl-9"
+            />
           </div>
         </div>
         {rows.length === 0 ? (
@@ -133,6 +181,53 @@ export function Customers() {
             <CustomerPanel id={openId} onRemoved={() => setOpenId(null)} />
           </div>
         )}
+      </Modal>
+
+      <Modal open={chargeOpen} onClose={closeCharge} title="Cobrar no cartão" description="Bipe o cartão do cliente e digite o valor.">
+        <div className="space-y-4 pb-3">
+          {!chargeCustomer && <CameraScanButton onCode={(c) => lookup(c)} label="Ler QR Code com a câmera" />}
+          {!chargeCustomer ? (
+            <Field label="Bipe o cartão" hint="Passe o leitor no código de barras (ou digite o número) e tecle Enter.">
+              <Input
+                value={scan}
+                onChange={(e) => setScan(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    lookup()
+                  }
+                }}
+                inputMode="numeric"
+                placeholder="Número do cartão"
+                autoFocus
+              />
+            </Field>
+          ) : (
+            <>
+              <div className="rounded-md bg-raised p-3">
+                <p className="text-sm font-semibold">{chargeCustomer.name}</p>
+                <p className="text-xs text-muted">{chargeCustomer.email}</p>
+                <p className="mt-2 text-sm tabular">
+                  Em aberto <span className="font-semibold">{money(chargeOwed)}</span>
+                  {chargeCustomer.limit > 0 && <span className="text-muted"> · limite {money(chargeCustomer.limit)}</span>}
+                </p>
+                {!chargeCustomer.active && <p className="mt-1 text-sm font-medium text-danger-text">Cartão bloqueado</p>}
+              </div>
+              <Field label="Valor">
+                <MoneyInput value={chargeValue} onChange={setChargeValue} autoFocus />
+              </Field>
+              <Field label="Descrição (opcional)">
+                <Input value={chargeNote} onChange={(e) => setChargeNote(e.target.value)} placeholder="Ex.: 2 salgados e 1 refri" />
+              </Field>
+              <div className="flex gap-2">
+                <Button onClick={() => setChargeId(null)}>Trocar cartão</Button>
+                <Button variant="primary" full disabled={chargeValue <= 0 || !chargeCustomer.active} onClick={charge}>
+                  Lançar {chargeValue > 0 ? money(chargeValue) : ''} no cartão
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
       </Modal>
 
       <Modal open={open} onClose={() => setOpen(false)} title="Novo cliente" description="Cria o login do cliente e o cartão dele.">
