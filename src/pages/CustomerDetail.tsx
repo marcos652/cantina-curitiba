@@ -29,6 +29,7 @@ export function CustomerPanel({ id, onRemoved }: { id: string; onRemoved: () => 
 
   const [payAmount, setPayAmount] = useState(0)
   const [payNote, setPayNote] = useState('')
+  const [limitDraft, setLimitDraft] = useState<number | null>(null)
   const [confirmRemove, setConfirmRemove] = useState(false)
 
   const isOwner = role === 'dono'
@@ -94,6 +95,21 @@ export function CustomerPanel({ id, onRemoved }: { id: string; onRemoved: () => 
                 <button type="button" onClick={() => setPayAmount(balance.owed)} className="h-7 rounded border border-control bg-white px-2 text-xs text-muted hover:text-ink">Quitar tudo ({money(balance.owed)})</button>
               </div>
               <Input value={payNote} onChange={(e) => setPayNote(e.target.value)} placeholder="Observação (ex.: Pix, dinheiro, fechamento de outubro)" className="h-8" />
+              <div className="flex items-end gap-2 border-t border-rule pt-3">
+                <Field label="Limite de dívida" hint="Zero = sem limite." className="flex-1">
+                  <MoneyInput value={limitDraft ?? selected.limit} onChange={setLimitDraft} />
+                </Field>
+                <Button
+                  disabled={limitDraft === null || limitDraft === selected.limit}
+                  onClick={() => {
+                    updateCustomer(selected.id, { limit: Math.max(0, limitDraft ?? 0) })
+                    notify('Limite atualizado.')
+                    setLimitDraft(null)
+                  }}
+                >
+                  Salvar limite
+                </Button>
+              </div>
             </div>
             <CardStatement customerId={selected.id} entries={entries} limit={selected.limit} onRemoveEntry={(e) => removeCardEntry(e.id)} />
           </div>

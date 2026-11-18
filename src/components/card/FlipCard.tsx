@@ -20,15 +20,15 @@ function Back({ balance, limit, active, number }: { balance: Balance; limit: num
     <div className="absolute inset-0 overflow-hidden rounded-2xl bg-gradient-to-br from-[#2b3038] via-[#14171c] to-[#0a0c0f] text-white shadow-xl ring-1 ring-white/10">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_40%,rgba(255,255,255,0.07)_50%,transparent_60%)]" />
       <div className="mt-4 h-8 w-full bg-black" />
-      <div className="relative flex h-[calc(100%-3.5rem)] flex-col justify-between p-5 pt-3 pb-3">
-        <div className="grid grid-cols-2 gap-3">
+      <div className="relative flex h-[calc(100%-3.5rem)] flex-col justify-between px-5 pb-2.5 pt-2">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
           <div>
             <p className="text-[9px] uppercase tracking-[0.2em] text-[#8f98a3]">Saldo devedor</p>
-            <p className={cx('text-xl font-bold tabular', balance.owed > 0 ? 'text-[#ff9b9b]' : 'text-[#7ee2a0]')}>{money(balance.owed)}</p>
+            <p className={cx('text-lg font-bold tabular', balance.owed > 0 ? 'text-[#ff9b9b]' : 'text-[#7ee2a0]')}>{money(balance.owed)}</p>
           </div>
           <div className="text-right">
             <p className="text-[9px] uppercase tracking-[0.2em] text-[#8f98a3]">Total pago</p>
-            <p className="text-xl font-bold text-[#7ee2a0] tabular">{money(balance.paid)}</p>
+            <p className="text-lg font-bold text-[#7ee2a0] tabular">{money(balance.paid)}</p>
           </div>
           <div>
             <p className="text-[9px] uppercase tracking-[0.2em] text-[#8f98a3]">Consumido</p>
@@ -40,10 +40,10 @@ function Back({ balance, limit, active, number }: { balance: Balance; limit: num
           </div>
         </div>
         <div>
-          <div className="h-9 rounded-md bg-white px-3 py-1">
+          <div className="h-8 rounded-md bg-white px-3 py-1">
             <Barcode value={number} />
           </div>
-          <p className="mt-1 text-center text-[9px] uppercase tracking-[0.2em] text-[#8f98a3]">{active ? 'Apresente no balcão para pagar' : 'Cartão bloqueado'}</p>
+          <p className="mt-0.5 text-center text-[8px] uppercase tracking-[0.2em] text-[#8f98a3]">{active ? 'Apresente no balcão para pagar' : 'Cartão bloqueado'}</p>
         </div>
       </div>
     </div>
