@@ -18,6 +18,7 @@ import { Statement } from '@/pages/Statement'
 import { SaleDetail } from '@/pages/SaleDetail'
 import { Users } from '@/pages/Users'
 import { Customers } from '@/pages/Customers'
+import { CustomerDetail } from '@/pages/CustomerDetail'
 import { MyCard } from '@/pages/MyCard'
 import { useSession } from '@/store/session'
 
@@ -48,6 +49,7 @@ export function App() {
           <Route path="/extrato" element={<Statement />} />
           <Route path="/relatorios" element={<Reports />} />
           <Route path="/clientes" element={<Customers />} />
+          <Route path="/clientes/:id" element={<CustomerDetail />} />
           <Route path="/usuarios" element={<Users />} />
           <Route path="/configuracoes" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

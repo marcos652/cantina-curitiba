@@ -408,7 +408,11 @@ export const useStore = create<Store>()((set, get) => ({
 
       // ---------- Cartão fidelidade ----------
       addCustomer(customer) {
-        set((s) => ({ customers: [...s.customers, { ...customer, cardNumber: customer.cardNumber || newCardNumber() }] }))
+        set((s) => {
+          const next = { ...customer, cardNumber: customer.cardNumber || newCardNumber() }
+          // O banco pode devolver o cliente antes de ele ser adicionado aqui: troca em vez de duplicar.
+          return { customers: [...s.customers.filter((c) => c.id !== customer.id), next] }
+        })
       },
 
       updateCustomer(id, patch) {
