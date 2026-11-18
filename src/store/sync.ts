@@ -218,7 +218,8 @@ export async function startSync(adapter: Adapter, legacy?: Partial<AppData> | nu
 
       synced[key] = new Map(remoteMap)
       const same = result.length === local.length && result.every((r) => stable(r) === stable(localMap.get(r.id) ?? null))
-      if (!same) useStore.setState({ [key]: sorted(key, result) } as Partial<AppData>)
+      const unique = [...new Map(result.map((r) => [r.id, r])).values()]
+      if (!same || unique.length !== result.length) useStore.setState({ [key]: sorted(key, unique) } as Partial<AppData>)
     },
     onSettings(remoteSettings) {
       if (!remoteSettings) return

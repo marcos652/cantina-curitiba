@@ -4,6 +4,7 @@ import { uid } from '@/lib/ids'
 import { nowISO, todayStr } from '@/lib/dates'
 import { calcFee, round2 } from '@/lib/payments'
 import { customerBalance, newCardNumber } from '@/lib/card'
+import { uniqueById } from '@/lib/unique'
 import { pickLotsFIFO, productLots } from '@/lib/stock'
 import { DEFAULT_SETTINGS, emptyData } from './defaults'
 import { buildDemoData } from './seed'
@@ -534,7 +535,7 @@ export const useStore = create<Store>()((set, get) => ({
       },
 
       hydrate(data) {
-        set({ ...data })
+        set({ ...data, customers: uniqueById(data.customers ?? []), cardEntries: uniqueById(data.cardEntries ?? []) })
       },
 
       clear() {

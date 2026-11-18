@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { ExternalLink, IdCard, Search, UserPlus } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useSession } from '@/store/session'
 import { createCustomer, createMessage } from '@/store/users'
 import { customerBalance } from '@/lib/card'
+import { uniqueById } from '@/lib/unique'
 import { money } from '@/lib/format'
 import { cx } from '@/lib/cx'
 import { Button } from '@/components/ui/Button'
@@ -29,12 +30,13 @@ export function Customers() {
   const [senha, setSenha] = useState('')
   const [limit, setLimit] = useState(0)
   const [busy, setBusy] = useState(false)
+  const submitting = useRef(false)
   const [error, setError] = useState('')
 
   const isOwner = role === 'dono'
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return customers
+    return uniqueById(customers)
       .filter((c) => !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q))
       .map((c) => ({ c, b: customerBalance(entries, c.id) }))
       .sort((a, b) => a.c.name.localeCompare(b.c.name))
@@ -49,9 +51,10 @@ export function Customers() {
 
   async function add(e: React.FormEvent) {
     e.preventDefault()
-    if (busy) return
+    if (submitting.current) return
     setError('')
     if (senha.length < 6) return setError('A senha precisa ter pelo menos 6 caracteres.')
+    submitting.current = true
     setBusy(true)
     try {
       await createCustomer({ nome, email, senha, limit })
@@ -64,6 +67,7 @@ export function Customers() {
     } catch (err) {
       setError(createMessage(err))
     } finally {
+      submitting.current = false
       setBusy(false)
     }
   }
