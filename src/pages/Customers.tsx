@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { ExternalLink, IdCard, Search, UserPlus } from 'lucide-react'
+import { ChevronRight, IdCard, Search, UserPlus } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useSession } from '@/store/session'
 import { createCustomer, createMessage } from '@/store/users'
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { Tabs } from '@/components/ui/Tabs'
 import { SALES_TABS } from './Sales'
+import { CustomerPanel } from './CustomerDetail'
 
 /** Lista de clientes: clicar abre a página do cartão da pessoa. */
 export function Customers() {
@@ -25,6 +26,8 @@ export function Customers() {
 
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
+  const [openId, setOpenId] = useState<string | null>(null)
+  const openCustomer = customers.find((c) => c.id === openId)
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -103,7 +106,7 @@ export function Customers() {
           <ul className="divide-y divide-rule">
             {rows.map(({ c, b }) => (
               <li key={c.id}>
-                <a href={`#/clientes/${c.id}`} target="_blank" rel="noopener noreferrer" title="Abrir o cartão em uma nova aba" className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-raised">
+                <button type="button" onClick={() => setOpenId(c.id)} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-raised">
                   <span className="min-w-0">
                     <span className="flex items-center gap-2 truncate text-sm font-medium">
                       {c.name} {!c.active && <Badge tone="danger">Bloqueado</Badge>}
@@ -115,14 +118,22 @@ export function Customers() {
                       <span className="block text-[11px] text-muted">Deve</span>
                       <span className={cx('text-sm font-bold tabular', b.owed > 0 ? 'text-danger-text' : 'text-ok-text')}>{money(b.owed)}</span>
                     </span>
-                    <ExternalLink size={15} strokeWidth={1.75} className="text-faint" />
+                    <ChevronRight size={16} strokeWidth={1.75} className="text-faint" />
                   </span>
-                </a>
+                </button>
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      <Modal open={Boolean(openCustomer)} onClose={() => setOpenId(null)} title={openCustomer?.name ?? ''} description={openCustomer?.email} size="lg">
+        {openId && (
+          <div className="pb-3">
+            <CustomerPanel id={openId} onRemoved={() => setOpenId(null)} />
+          </div>
+        )}
+      </Modal>
 
       <Modal open={open} onClose={() => setOpen(false)} title="Novo cliente" description="Cria o login do cliente e o cartão dele.">
         <form onSubmit={add} className="space-y-4">

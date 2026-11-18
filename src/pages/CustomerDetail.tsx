@@ -15,10 +15,8 @@ import { ConfirmDialog } from '@/components/ui/Modal'
 import { FlipCard } from '@/components/card/FlipCard'
 import { CardStatement } from '@/components/card/Statement'
 
-/** Página do cartão de um cliente: cartão em destaque, pagamento e compras do mês. */
-export function CustomerDetail() {
-  const { id } = useParams()
-  const navigate = useNavigate()
+/** Cartão de um cliente: cartão em destaque, pagamento e compras do mês. Usado no modal da lista e na página. */
+export function CustomerPanel({ id, onRemoved }: { id: string; onRemoved: () => void }) {
   const role = useSession((s) => s.role)
   const customers = useStore((s) => s.customers)
   const entries = useStore((s) => s.cardEntries)
@@ -35,16 +33,12 @@ export function CustomerDetail() {
 
   const isOwner = role === 'dono'
   const selected = customers.find((c) => c.id === id)
-  const crumbs = [{ label: 'Clientes e cartões', to: '/clientes' }]
 
   if (!selected) {
     return (
-      <>
-        <PageHeader title="Cliente não encontrado" crumbs={crumbs} />
-        <div className="card">
-          <EmptyState icon={IdCard} title="Este cartão não existe mais" description="Volte à lista de clientes." />
-        </div>
-      </>
+      <div className="card">
+        <EmptyState icon={IdCard} title="Este cartão não existe mais" description="Volte à lista de clientes." />
+      </div>
     )
   }
 
@@ -62,7 +56,7 @@ export function CustomerDetail() {
     try {
       await removeCustomerAccess(selected!.id)
       notify('Cartão excluído.')
-      navigate('/clientes')
+      onRemoved()
     } catch (err) {
       notify(createMessage(err), 'error')
     }
@@ -70,8 +64,7 @@ export function CustomerDetail() {
 
   return (
     <>
-      <PageHeader title={selected.name} description={selected.email} crumbs={crumbs} />
-      <div className="mx-auto min-w-0 max-w-3xl space-y-4">
+      <div className="min-w-0 space-y-4">
             <section className="flex flex-col items-center py-4">
               <FlipCard name={selected.name} number={selected.cardNumber} storeName={storeName} logo={logo} active={selected.active} balance={balance} limit={selected.limit} />
               <p className="mt-3 text-xs text-muted">Deslize o cartão para o lado para virar</p>
@@ -114,6 +107,21 @@ export function CustomerDetail() {
         confirmLabel="Excluir cartão"
         danger
       />
+    </>
+  )
+}
+
+/** Página completa do cartão (endereço /clientes/:id). */
+export function CustomerDetail() {
+  const { id = '' } = useParams()
+  const navigate = useNavigate()
+  const customer = useStore((s) => s.customers.find((c) => c.id === id))
+  return (
+    <>
+      <PageHeader title={customer?.name ?? 'Cliente não encontrado'} description={customer?.email} crumbs={[{ label: 'Clientes e cartões', to: '/clientes' }]} />
+      <div className="mx-auto max-w-3xl">
+        <CustomerPanel id={id} onRemoved={() => navigate('/clientes')} />
+      </div>
     </>
   )
 }
