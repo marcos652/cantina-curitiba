@@ -27,6 +27,8 @@ import { openSession } from '@/store/selectors'
 import { Button } from '@/components/ui/Button'
 import { useSession } from '@/store/session'
 import { logout } from '@/store/boot'
+import { accountSlot, accountLabel } from '@/lib/accounts'
+import { OtherAccounts } from './OtherAccounts'
 
 interface Leaf {
   to: string
@@ -148,7 +150,9 @@ function UserMenu() {
   const email = useSession((s) => s.user?.email)
   return (
     <div className="flex items-center gap-1">
-      {email && <span className="hidden max-w-[180px] truncate text-xs text-muted 2xl:inline">{email}</span>}
+      {accountSlot && <span className="rounded bg-accent-soft px-1.5 py-0.5 text-[11px] font-medium text-accent">{accountLabel}</span>}
+      {email && <span className="hidden max-w-[180px] truncate text-xs text-muted xl:inline">{email}</span>}
+      <OtherAccounts />
       <Button variant="ghost" size="sm" icon onClick={() => void logout()} title="Sair" aria-label="Sair">
         <LogOut size={16} strokeWidth={1.75} />
       </Button>

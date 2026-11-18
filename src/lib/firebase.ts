@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app'
+import { accountSlot } from './accounts'
 import { getAuth } from 'firebase/auth'
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
 
@@ -13,7 +14,8 @@ const firebaseConfig = {
   appId: '1:114701017722:web:4f5425c012be32e43c11c3',
 }
 
-export const app = initializeApp(firebaseConfig)
+// Cada conta em paralelo é um app do Firebase com nome próprio (login e cache separados). Sem conta: o app padrão de sempre.
+export const app = accountSlot ? initializeApp(firebaseConfig, `conta-${accountSlot}`) : initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 
 /** Cache local em IndexedDB: o sistema abre rápido e continua gravando sem internet, enviando depois. */

@@ -21,6 +21,7 @@ import { Customers } from '@/pages/Customers'
 import { CustomerDetail } from '@/pages/CustomerDetail'
 import { MyCard } from '@/pages/MyCard'
 import { useSession } from '@/store/session'
+import { accountSlot, accountLabel } from '@/lib/accounts'
 
 export function App() {
   const storeName = useStore((s) => s.settings.storeName)
@@ -28,7 +29,7 @@ export function App() {
   const phase = useSession((s) => s.phase)
 
   useEffect(() => {
-    document.title = storeName || 'Cantina'
+    document.title = (storeName || 'Cantina') + (accountSlot ? ` · ${accountLabel}` : '')
   }, [storeName])
 
   return (

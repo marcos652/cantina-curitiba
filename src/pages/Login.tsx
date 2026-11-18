@@ -3,6 +3,8 @@ import { Croissant } from 'lucide-react'
 import { authMessage, login, sendReset } from '@/store/boot'
 import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Field'
+import { OtherAccounts } from '@/components/layout/OtherAccounts'
+import { accountSlot, accountLabel } from '@/lib/accounts'
 
 export function Login() {
   const [email, setEmail] = useState('')
@@ -63,6 +65,10 @@ export function Login() {
             <button type="button" onClick={forgot} className="link mx-auto flex">
               Esqueci minha senha
             </button>
+            <div className="flex flex-col items-center border-t border-rule pt-3">
+              {accountSlot && <p className="mb-1 text-xs text-muted">Você está na {accountLabel}.</p>}
+              <OtherAccounts withLabel />
+            </div>
           </form>
         </div>
       </div>
