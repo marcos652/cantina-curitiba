@@ -38,6 +38,8 @@ export function Customers() {
   const [toRemove, setToRemove] = useState<string | null>(null)
 
   const isOwner = role === 'dono'
+  const toRemoveCustomer = customers.find((c) => c.id === toRemove)
+  const toRemoveOwed = toRemoveCustomer ? customerBalance(entries, toRemoveCustomer.id).owed : 0
   const rows = useMemo(
     () => customers.map((c) => ({ c, b: customerBalance(entries, c.id) })).sort((a, b) => a.c.name.localeCompare(b.c.name)),
     [customers, entries],
@@ -79,7 +81,7 @@ export function Customers() {
     try {
       await removeCustomerAccess(toRemove)
       if (selectedId === toRemove) setSelectedId(null)
-      notify('Cliente removido.')
+      notify('Cartão excluído.')
     } catch (err) {
       notify(createMessage(err), 'error')
     }
@@ -160,7 +162,7 @@ export function Customers() {
                   </Button>
                   {isOwner && (
                     <Button size="sm" variant="ghost" className="text-danger" onClick={() => setToRemove(selected.id)}>
-                      <Trash2 size={14} strokeWidth={1.75} /> Remover
+                      <Trash2 size={14} strokeWidth={1.75} /> Excluir cartão
                     </Button>
                   )}
                 </div>
@@ -175,9 +177,9 @@ export function Customers() {
         open={Boolean(toRemove)}
         onClose={() => setToRemove(null)}
         onConfirm={remove}
-        title="Remover este cliente?"
-        message="O cartão e todo o histórico de lançamentos dele serão apagados e o login deixa de dar acesso. As vendas continuam no histórico."
-        confirmLabel="Remover cliente"
+        title={toRemoveCustomer ? `Excluir o cartão de ${toRemoveCustomer.name}?` : ''}
+        message={`${toRemoveOwed > 0 ? `ATENÇÃO: este cliente ainda deve ${money(toRemoveOwed)}. ` : ''}O cartão e todo o histórico de lançamentos dele serão apagados e o login deixa de dar acesso. As vendas continuam no histórico. Não dá para desfazer.`}
+        confirmLabel="Excluir cartão"
         danger
       />
     </>

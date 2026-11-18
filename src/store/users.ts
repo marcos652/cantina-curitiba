@@ -109,21 +109,25 @@ export async function createCustomer(input: NewCustomer): Promise<void> {
   }
   const { app, db, fs, au, fa } = await fb()
   const secondary = fa.initializeApp(app.options, 'secundario-' + Date.now())
-  let uid = ''
   try {
     const sauth = au.getAuth(secondary)
     const cred = await au.createUserWithEmailAndPassword(sauth, email, input.senha)
-    uid = cred.user.uid
+    const customer = make(cred.user.uid)
+    try {
+      const batch = fs.writeBatch(db)
+      batch.set(fs.doc(db, 'lojas', lojaId, 'customers', customer.id), customer)
+      batch.set(fs.doc(db, 'usuarios', customer.id), { lojaId, nome: name, email })
+      await batch.commit()
+    } catch (e) {
+      // Não deixa um login órfão para trás: desfaz a conta recém-criada.
+      await au.deleteUser(cred.user).catch(() => {})
+      throw e
+    }
     await au.signOut(sauth)
+    useStore.getState().addCustomer(customer)
   } finally {
     await fa.deleteApp(secondary)
   }
-  const customer = make(uid)
-  const batch = fs.writeBatch(db)
-  batch.set(fs.doc(db, 'lojas', lojaId, 'customers', uid), customer)
-  batch.set(fs.doc(db, 'usuarios', uid), { lojaId, nome: name, email })
-  await batch.commit()
-  useStore.getState().addCustomer(customer)
 }
 
 /** Remove o vínculo do cliente com a loja (o login dele deixa de dar acesso). */
