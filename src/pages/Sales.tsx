@@ -21,6 +21,7 @@ export const SALES_TABS = [
   { to: '/vendas', label: 'Nova venda', end: true },
   { to: '/vendas/historico', label: 'Histórico' },
   { to: '/vendas/fiado', label: 'Fiado' },
+  { to: '/clientes', label: 'Clientes e cartões' },
 ]
 
 const INSTALLMENTS = Array.from({ length: 11 }, (_, i) => i + 2)

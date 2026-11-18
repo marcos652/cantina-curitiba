@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ChevronRight, IdCard, Search, UserPlus } from 'lucide-react'
+import { ExternalLink, IdCard, Search, UserPlus } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { useSession } from '@/store/session'
 import { createCustomer, createMessage } from '@/store/users'
@@ -13,6 +12,8 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
+import { Tabs } from '@/components/ui/Tabs'
+import { SALES_TABS } from './Sales'
 
 /** Lista de clientes: clicar abre a página do cartão da pessoa. */
 export function Customers() {
@@ -69,6 +70,7 @@ export function Customers() {
 
   return (
     <>
+      <Tabs items={SALES_TABS} />
       <PageHeader title="Clientes e cartões" description="Cada cliente tem um cartão fidelidade: o que ele pega vira dívida e é pago no fechamento do mês.">
         {isOwner && (
           <Button variant="primary" onClick={() => setOpen(true)}>
@@ -97,7 +99,7 @@ export function Customers() {
           <ul className="divide-y divide-rule">
             {rows.map(({ c, b }) => (
               <li key={c.id}>
-                <Link to={`/clientes/${c.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-raised">
+                <a href={`#/clientes/${c.id}`} target="_blank" rel="noopener noreferrer" title="Abrir o cartão em uma nova aba" className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-raised">
                   <span className="min-w-0">
                     <span className="flex items-center gap-2 truncate text-sm font-medium">
                       {c.name} {!c.active && <Badge tone="danger">Bloqueado</Badge>}
@@ -109,9 +111,9 @@ export function Customers() {
                       <span className="block text-[11px] text-muted">Deve</span>
                       <span className={cx('text-sm font-bold tabular', b.owed > 0 ? 'text-danger-text' : 'text-ok-text')}>{money(b.owed)}</span>
                     </span>
-                    <ChevronRight size={16} strokeWidth={1.75} className="text-faint" />
+                    <ExternalLink size={15} strokeWidth={1.75} className="text-faint" />
                   </span>
-                </Link>
+                </a>
               </li>
             ))}
           </ul>
